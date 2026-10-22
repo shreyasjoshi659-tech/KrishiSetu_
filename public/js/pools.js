@@ -32,13 +32,13 @@ window.Pools = (() => {
 
   // ================= LIST =================
   async function list(root) {
-    let tab = 'mine';
+    let tab = 'discover';
     root.innerHTML = `
       <header class="topbar"><div><h1>Farmer Pools 🤝</h1><p>Pool your harvest. One price. Better buyers.</p></div>
         <a class="btn" href="#/pools/new" id="new-pool">+ Create pool</a></header>
       <div class="joinbar"><input id="join-code" placeholder="Have an invite link or code? Paste it here" /><button class="btn ghost" id="join-go">Join</button></div>
-      <div class="seg" id="seg"><button data-t="mine" class="on">My pools</button><button data-t="discover">Discover</button></div>
-      <div class="filters" id="filters" hidden>
+      <div class="seg" id="seg"><button data-t="discover" class="on">Discover</button><button data-t="mine">My pools</button></div>
+      <div class="filters" id="filters">
         <select id="f-crop"><option value="">All crops</option>${CROPS.map((c) => `<option>${c}</option>`).join('')}</select>
         <select id="f-state"><option value="">All states</option>${STATES.map((s) => `<option>${s}</option>`).join('')}</select></div>
       <section class="pgrid" id="grid"><div class="muted">Loading…</div></section>`;
@@ -229,24 +229,34 @@ window.Pools = (() => {
     }
 
     function renderBuyers() {
-      const thread = [...pool.emails].reverse().map((e) => `<div class="mail ${e.direction}"><div class="mail-h"><b>${e.direction === 'out' ? '📤 Sent to' : '📩 From'} ${esc(e.name)}</b><small>${fmtDate(e.at)} ${fmtTime(e.at)}</small></div>
+      const thread = [...pool.emails].reverse().map((e) => `<div class="mail ${e.direction}"><div class="mail-h"><b>${e.direction === 'out' ? (e.channel === 'whatsapp' ? '💬 WhatsApp Offer to' : '📤 Direct Offer to') : '📩 From'} ${esc(e.name)}</b><small>${fmtDate(e.at)} ${fmtTime(e.at)}</small></div>
         ${e.email ? `<small class="muted">${esc(e.email)}</small>` : ''}
         <div class="mail-b">${e.direction === 'out' ? esc(e.subject) : esc(e.body).replace(/\n/g, '<br>')}</div>
-        ${e.previewUrl ? `<a class="link" target="_blank" rel="noopener" href="${esc(e.previewUrl)}">View test email ↗</a>` : ''}</div>`).join('');
+        ${e.previewUrl ? `<a class="link" target="_blank" rel="noopener" href="${esc(e.previewUrl)}">View email preview ↗</a>` : ''}</div>`).join('');
       let form;
       if (pool.status === 'closed') form = '<p class="muted">Pool closed.</p>';
       else if (!isCoord()) form = `<p class="muted">The coordinator handles buyer outreach and shares replies here.</p>`;
-      else if (!pool.agreedPrice) form = `<p class="locked">🔒 Agree on a single price in the chat first. Then you can email processing companies and wholesalers as this pool.</p>`;
-      else form = `<form id="of"><div class="row"><div class="field"><label>Company / wholesaler</label><input id="o-name" required placeholder="e.g. Sharma Agro Mills" /></div>
-          <div class="field"><label>Buyer email</label><input id="o-email" type="email" required placeholder="procurement@company.com" /></div></div>
-          <div class="field"><label>Message from coordinator (optional)</label><textarea id="o-note" rows="2" maxlength="1000" placeholder="Delivery terms, quality details…"></textarea></div>
-          <div class="error" id="o-err"></div><button class="btn full">Review &amp; send offer</button></form>
-          <details class="manual"><summary>Buyer replied by phone/WhatsApp? Log it</summary>
-          <form id="rf"><input id="r-name" placeholder="Buyer name" required /><textarea id="r-body" rows="2" placeholder="What did they say?" required></textarea><button class="btn ghost sm">Share with pool</button></form></details>`;
-      const notice = mail.mode === 'test' ? '<div class="note warn">⚠️ Email is in <b>TEST mode</b> – messages go to a preview inbox, not to real companies. Add SMTP details in <code>.env</code> to go live.</div>'
-        : !mail.inbound ? '<div class="note">Replies are not auto-collected (IMAP not configured). Use “Log it” to share replies.</div>' : '';
+      else if (!pool.agreedPrice) form = `<p class="locked">🔒 Agree on a single price in the chat first. Then you can dispatch formal offers to processing companies and wholesalers.</p>`;
+      else form = `<form id="of">
+          <div class="row">
+            <div class="field"><label>Company / wholesaler name</label><input id="o-name" required placeholder="e.g. Sharma Agro Mills / ITC" /></div>
+            <div class="field"><label>Buyer WhatsApp / Mobile (optional)</label><input id="o-phone" type="tel" placeholder="e.g. 98765 12340" /></div>
+          </div>
+          <div class="field"><label>Buyer email (optional)</label><input id="o-email" type="email" placeholder="procurement@company.com" /></div>
+          <div class="field"><label>Message from coordinator (optional)</label><textarea id="o-note" rows="2" maxlength="1000" placeholder="Delivery terms, quality grade, payment timeline…"></textarea></div>
+          <div class="error" id="o-err"></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+            <button type="button" class="btn wa" id="btn-wa-dispatch" style="flex:1; min-width:180px; display:inline-flex; align-items:center; justify-content:center; gap:8px;">💬 Send via WhatsApp</button>
+            <button type="button" class="btn" id="btn-mail-dispatch" style="flex:1; min-width:180px; display:inline-flex; align-items:center; justify-content:center; gap:8px;">✉️ Open in Email (mailto)</button>
+          </div>
+        </form>
+        <details class="manual" style="margin-top:14px;"><summary>Buyer replied by phone/WhatsApp? Log it</summary>
+        <form id="rf"><input id="r-name" placeholder="Buyer name" required /><textarea id="r-body" rows="2" placeholder="What did they say?" required></textarea><button class="btn ghost sm">Share with pool</button></form></details>`;
+      const notice = `<div class="note" style="border-color: rgba(95,211,141,0.35); background: rgba(95,211,141,0.08); display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <span style="font-size:1.2rem;">⚡</span>
+        <div><b>Live Direct Outreach Active</b>: Send collective harvest quotations directly via WhatsApp or your native email client with 1 tap.</div>
+      </div>`;
       $('#buyers').innerHTML = `<div class="panel-card"><h3>📬 Buyers <small class="muted">${pool.emails.filter((e) => e.direction === 'out').length} contacted</small></h3>${isCoord() ? notice : ''}${form}
-        ${isCoord() && mail.inbound && pool.emails.length ? '<button class="btn ghost sm" id="btn-check">↻ Check for replies</button>' : ''}
         <div class="thread">${thread || ''}</div></div>`;
     }
 
@@ -256,13 +266,70 @@ window.Pools = (() => {
     // realtime
     const es = new EventSource(`/api/pools/${id}/stream?token=${K().token}`);
     es.addEventListener('pool', (e) => {
-      const keep = { name: $('#o-name')?.value, email: $('#o-email')?.value, note: $('#o-note')?.value };
+      const keep = { name: $('#o-name')?.value, phone: $('#o-phone')?.value, email: $('#o-email')?.value, note: $('#o-note')?.value };
       pool = JSON.parse(e.data); renderHead(); renderPrice(); renderMsgs(); renderMembers();
-      if (!document.activeElement?.closest('#buyers')) { renderBuyers(); if (keep.name) { $('#o-name').value = keep.name; $('#o-email').value = keep.email; $('#o-note').value = keep.note; } }
+      if (!document.activeElement?.closest('#buyers')) { renderBuyers(); if (keep.name) { $('#o-name').value = keep.name; if ($('#o-phone')) $('#o-phone').value = keep.phone; $('#o-email').value = keep.email; $('#o-note').value = keep.note; } }
     });
 
     const act = async (fn, okMsg) => { try { await fn(); if (okMsg) K().toast(okMsg); } catch (e) { K().toast(e.message, 'err'); } };
     const call = (path, body) => K().api(`/pools/${id}${path}`, { method: 'POST', body });
+
+    async function dispatchOffer(channel) {
+      const errBox = $('#o-err');
+      if (errBox) errBox.textContent = '';
+      const buyerName = ($('#o-name')?.value || '').trim();
+      const buyerPhone = ($('#o-phone')?.value || '').trim();
+      const buyerEmail = ($('#o-email')?.value || '').trim();
+      const note = ($('#o-note')?.value || '').trim();
+
+      if (!buyerName) {
+        if (errBox) errBox.textContent = 'Please enter the company or wholesaler name.';
+        $('#o-name')?.focus();
+        return;
+      }
+      if (channel === 'email' && !buyerEmail) {
+        if (errBox) errBox.textContent = 'Please enter the buyer email address to open email.';
+        $('#o-email')?.focus();
+        return;
+      }
+
+      const body = { buyerName, buyerEmail, buyerPhone, note, channel };
+
+      try {
+        const preview = await K().api(`/pools/${id}/outreach/preview`, { method: 'POST', body });
+        
+        if (channel === 'whatsapp') {
+          const waMsg = `🌾 *KRISHISETU - HARVEST POOL QUOTATION* 🌾\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🏢 *To:* ${buyerName}\n` +
+            `🏷️ *Pool:* ${pool.name}\n` +
+            `🌾 *Crop:* ${pool.crop}${pool.variety ? ' (' + pool.variety + ')' : ''}\n` +
+            `⚖️ *Total Pooled Quantity:* ${preview.totalQty} Quintals\n` +
+            `💰 *Agreed Collective Price:* ₹${Number(preview.agreedPrice).toLocaleString('en-IN')}/quintal\n` +
+            `📍 *Location:* ${[pool.district, pool.state].filter(Boolean).join(', ')}\n` +
+            `🧑‍🌾 *Farmer Collective:* ${pool.members ? pool.members.length : 'Member'} verified farmers\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            (note ? `💬 *Coordinator Note:* ${note}\n` : '') +
+            `📞 *Coordinator:* ${K().user.name} (${K().user.phone})\n` +
+            `🔗 *Pool Reference:* KS-${pool.code}\n\n` +
+            `_Official harvest quotation via KrishiSetu Platform_`;
+
+          const cleanPhone = buyerPhone.replace(/[\s\-\+]/g, '');
+          const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}?text=${encodeURIComponent(waMsg)}` : `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+          
+          window.open(waUrl, '_blank');
+          await call('/outreach', body);
+          K().toast('WhatsApp quotation dispatched! 💬');
+        } else {
+          const mailtoUrl = `mailto:${encodeURIComponent(buyerEmail)}?subject=${encodeURIComponent(preview.subject)}&body=${encodeURIComponent(preview.text)}`;
+          window.location.href = mailtoUrl;
+          await call('/outreach', body);
+          K().toast('Email quotation opened & logged! ✉️');
+        }
+      } catch (err) {
+        if (errBox) errBox.textContent = err.message || 'Failed to dispatch offer.';
+      }
+    }
 
     wrap.addEventListener('click', (e) => {
       const t = e.target;
@@ -275,6 +342,8 @@ window.Pools = (() => {
       if (t.closest('#btn-leave') && confirm('Leave this pool?')) act(async () => { await call('/leave'); K().go('#/pools'); }, 'You left the pool');
       if (t.closest('#btn-close') && confirm('Close this pool for everyone?')) act(() => call('/close'));
       if (t.closest('#btn-check')) act(async () => { const r = await call('/check-replies'); K().toast(r.newReplies ? `${r.newReplies} new repl${r.newReplies > 1 ? 'ies' : 'y'}` : 'No new replies yet'); });
+      if (t.closest('#btn-wa-dispatch')) dispatchOffer('whatsapp');
+      if (t.closest('#btn-mail-dispatch')) dispatchOffer('email');
     });
     $('#msg-form').addEventListener('submit', (e) => {
       e.preventDefault(); const i = $('#msg-in'); const text = i.value.trim(); if (!text) return;
@@ -285,16 +354,7 @@ window.Pools = (() => {
     wrap.addEventListener('submit', (e) => {
       if (e.target.id === 'of') {
         e.preventDefault();
-        const body = { buyerName: $('#o-name').value, buyerEmail: $('#o-email').value, note: $('#o-note').value };
-        K().api(`/pools/${id}/outreach/preview`, { method: 'POST', body }).then((p) => {
-          const m = modal(`<h2>Review email</h2><p class="muted">This will be sent from KrishiSetu on behalf of your pool.</p>
-            <div class="prev"><div><b>To:</b> ${esc(p.to)}</div><div><b>Subject:</b> ${esc(p.subject)}</div><pre>${esc(p.text)}</pre></div>
-            <div class="share"><button class="btn" id="go-send">Send to buyer</button><button class="btn ghost" data-close>Edit</button></div>`);
-          m.el.querySelector('#go-send').onclick = async (ev) => {
-            ev.target.disabled = true; ev.target.textContent = 'Sending…';
-            try { await call('/outreach', body); m.close(); K().toast('Offer emailed 📧'); } catch (err) { K().toast(err.message, 'err'); ev.target.disabled = false; ev.target.textContent = 'Send to buyer'; }
-          };
-        }).catch((err) => { $('#o-err').textContent = err.message; });
+        dispatchOffer($('#o-email')?.value ? 'email' : 'whatsapp');
       }
       if (e.target.id === 'rf') {
         e.preventDefault();

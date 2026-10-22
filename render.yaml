@@ -2,16 +2,10 @@ services:
   - type: web
     name: krishisetu
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install
     startCommand: node server.js
     healthCheckPath: /
     envVars:
-      - key: DATA_DIR
-        value: /var/data
-      - key: JWT_SECRET
-        generateValue: true
-    disk:
-      name: krishisetu-data
-      mountPath: /var/data
-      sizeGB: 1
+      - key: NODE_VERSION
+        value: 20

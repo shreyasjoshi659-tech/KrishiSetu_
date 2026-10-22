@@ -65,7 +65,7 @@ window.Pools = (() => {
 
   // ================= LIST =================
   async function list(root) {
-    let tab = 'mine';
+    let tab = 'discover';
     root.innerHTML = `
       <div class="demo-banner">
         <span>⚠️</span>
@@ -89,11 +89,11 @@ window.Pools = (() => {
       </div>
 
       <div class="seg" id="seg">
-        <button data-t="mine" class="on">मेरे समूह · My Pools</button>
-        <button data-t="discover">खुले समूह खोजें · Discover</button>
+        <button data-t="discover" class="on">खुले समूह खोजें · Discover</button>
+        <button data-t="mine">मेरे समूह · My Pools</button>
       </div>
 
-      <div class="filters" id="filters" hidden>
+      <div class="filters" id="filters">
         <select id="f-crop">
           <option value="">सभी फसलें (All crops)</option>
           ${CROPS.map((c) => `<option value="${c.split(' ')[0]}">${c}</option>`).join('')}

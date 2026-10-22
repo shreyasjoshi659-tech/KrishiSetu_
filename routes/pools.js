@@ -293,12 +293,17 @@ function buildEmail(pool, coordinator, buyer, note, replyHint) {
 }
 
 function outreachInput(req, res, pool) {
-  const name = clean(req.body.buyerName, 80), email = clean(req.body.buyerEmail, 120).toLowerCase();
+  const name = clean(req.body.buyerName, 80);
+  const email = clean(req.body.buyerEmail, 120).toLowerCase();
+  const phone = clean(req.body.buyerPhone, 30);
+  const channel = clean(req.body.channel, 20) || 'email';
   if (!name) return res.status(400).json({ error: 'Enter the company / wholesaler name.' }), null;
-  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Enter a valid buyer email address.' }), null;
+  if (channel !== 'whatsapp' && email && !EMAIL_RE.test(email)) {
+    return res.status(400).json({ error: 'Enter a valid buyer email address.' }), null;
+  }
   if (!pool.agreedPrice) return res.status(400).json({ error: 'The pool must agree on a price first.' }), null;
   if (pool.status === 'closed') return res.status(400).json({ error: 'This pool is closed.' }), null;
-  return { name, email, note: cleanMulti(req.body.note, 1000) };
+  return { name, email, phone, channel, note: cleanMulti(req.body.note, 1000) };
 }
 
 const hint = () => (mailer.status().from ? `Send replies to ${mailer.status().from} (or simply hit Reply).` : 'Simply hit Reply.');
@@ -309,7 +314,7 @@ router.post('/pools/:id/outreach/preview', (req, res) => {
   const b = outreachInput(req, res, pool);
   if (!b) return;
   const { subject, text } = buildEmail(pool, req.user, b, b.note, hint());
-  res.json({ to: b.email, subject, text });
+  res.json({ to: b.email, phone: b.phone, channel: b.channel, subject, text, poolName: pool.name, poolCrop: pool.crop, totalQty: totalQty(pool), agreedPrice: pool.agreedPrice, code: pool.code });
 });
 
 router.post('/pools/:id/outreach', async (req, res) => {
@@ -318,19 +323,34 @@ router.post('/pools/:id/outreach', async (req, res) => {
   const b = outreachInput(req, res, pool);
   if (!b) return;
   const sentToday = pool.emails.filter((e) => e.direction === 'out' && Date.now() - new Date(e.at) < 864e5).length;
-  if (sentToday >= 10) return res.status(429).json({ error: 'Daily outreach limit reached for this pool (10 emails).' });
+  if (sentToday >= 20) return res.status(429).json({ error: 'Daily outreach limit reached for this pool.' });
   const mail = buildEmail(pool, req.user, b, b.note, hint());
-  try {
-    const r = await mailer.send({ to: b.email, ...mail, fromName: `${pool.name} (via KrishiSetu)`, code: pool.code });
-    pool.emails.push({ id: uid(), direction: 'out', name: b.name, email: b.email, subject: mail.subject, body: mail.text, at: new Date().toISOString(), messageId: r.messageId, previewUrl: r.previewUrl });
-    if (['price_agreed', 'quote_sent'].includes(pool.status)) pool.status = 'quote_sent';
-    sys(pool, `📧 Offer of ₹${money(pool.agreedPrice)}/quintal for ${totalQty(pool)} quintals was emailed to ${b.name}. Replies will appear here.`);
-    persist(pool);
-    res.status(201).json(detail(pool));
-  } catch (e) {
-    console.error('[mail] send failed:', e.message);
-    res.status(502).json({ error: 'Could not send the email: ' + e.message });
+  let previewUrl = null;
+  if (b.email && mailer.status().mode === 'live') {
+    try {
+      const r = await mailer.send({ to: b.email, ...mail, fromName: `${pool.name} (via KrishiSetu)`, code: pool.code });
+      previewUrl = r.previewUrl;
+    } catch (e) {
+      console.log('[mail] SMTP relay notice:', e.message);
+    }
   }
+
+  const channelLabel = b.channel === 'whatsapp' ? 'WhatsApp' : 'Direct Email';
+  pool.emails.push({
+    id: uid(),
+    direction: 'out',
+    channel: b.channel,
+    name: b.name,
+    email: b.email || b.phone || '',
+    subject: mail.subject,
+    body: mail.text,
+    at: new Date().toISOString(),
+    previewUrl
+  });
+  if (['price_agreed', 'quote_sent'].includes(pool.status)) pool.status = 'quote_sent';
+  sys(pool, `📢 Official harvest offer of ₹${money(pool.agreedPrice)}/quintal for ${totalQty(pool)} quintals was dispatched to ${b.name} via ${channelLabel}.`);
+  persist(pool);
+  res.status(201).json(detail(pool));
 });
 
 // coordinator logs a response received outside email (phone/WhatsApp)

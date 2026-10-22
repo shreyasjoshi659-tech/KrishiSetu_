@@ -72,6 +72,29 @@ app.post('/api/login', rateLimit, async (req, res) => {
 
 app.get('/api/me', auth, (req, res) => res.json({ user: publicUser(req.user) }));
 
+app.put('/api/me', auth, async (req, res) => {
+  const { name, state, district, village, nearestMandi, landSize, farmCategory, irrigation, crops, equipment, newPassword } = req.body || {};
+  const user = usersCol.rows.find((u) => u.id === req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found.' });
+
+  if (name && String(name).trim().length >= 2) user.name = String(name).trim();
+  if (state) user.state = String(state).trim();
+  if (district !== undefined) user.district = String(district || '').trim();
+  if (village !== undefined) user.village = String(village || '').trim();
+  if (nearestMandi !== undefined) user.nearestMandi = String(nearestMandi || '').trim();
+  if (landSize !== undefined) user.landSize = landSize !== null && landSize !== '' ? Number(landSize) || null : null;
+  if (farmCategory !== undefined) user.farmCategory = String(farmCategory || '').trim();
+  if (irrigation !== undefined) user.irrigation = String(irrigation || '').trim();
+  if (Array.isArray(crops)) user.crops = crops.map((c) => String(c).trim()).filter(Boolean).slice(0, 15);
+  if (Array.isArray(equipment)) user.equipment = equipment.map((e) => String(e).trim()).filter(Boolean).slice(0, 10);
+  if (newPassword && String(newPassword).length >= 6) {
+    user.passwordHash = await bcrypt.hash(String(newPassword), 10);
+  }
+  user.updatedAt = new Date().toISOString();
+  usersCol.save();
+  res.json({ user: publicUser(user) });
+});
+
 app.use('/api', poolRouter);
 app.use('/api', labourRouter);
 app.use('/api', equipmentRouter);

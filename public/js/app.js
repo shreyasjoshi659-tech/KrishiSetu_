@@ -42,16 +42,28 @@
   const navHtml = items.map(([i, l, h]) => `<a href="${h}" data-h="${h}"><span class="ico">${i}</span>${l}</a>`).join('');
   $('nav').innerHTML = navHtml + `<a class="disabled"><span class="ico">✨</span>More soon</a>`;
   $('bnav').innerHTML = navHtml;
+  $('user-pill')?.addEventListener('click', () => { location.hash = '#/profile'; });
 
   const view = $('view');
   let cleanup = null;
+
+  const ALL_CROPS = ['Wheat', 'Soybean', 'Gram', 'Rice / Paddy', 'Cotton', 'Maize', 'Mustard', 'Sugarcane', 'Garlic', 'Onion', 'Vegetables', 'Pulses'];
+  const ALL_EQUIP = ['Tractor', 'Rotavator', 'Trolley', 'Seed drill', 'Sprayer', 'Drone', 'Power tiller', 'Harvester', 'Water pump'];
+  const STATES = ['Andhra Pradesh','Assam','Bihar','Chhattisgarh','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Odisha','Punjab','Rajasthan','Tamil Nadu','Telangana','Uttar Pradesh','Uttarakhand','West Bengal','Other'];
+  const SCALES = ['Marginal (< 2.5 acres)', 'Small (2.5 – 5 acres)', 'Medium (5 – 10 acres)', 'Large (> 10 acres)'];
+  const IRRIGATIONS = ['Borewell / Tube well', 'Canal irrigation', 'Rainfed (Monsoon dependant)', 'Drip / Sprinkler system', 'Pond / River / Well'];
 
   async function home() {
     let mine = [];
     try { mine = (await api('/pools?scope=mine')).pools; } catch {}
     const qty = mine.reduce((a, p) => a + p.totalQuantity, 0);
     view.innerHTML = `
-      <header class="topbar"><div><h1>Namaste, ${esc(first)} 🙏</h1><p>Your farm, simplified.</p></div></header>
+      <header class="topbar">
+        <div>
+          <h1>Namaste, <button type="button" id="top-user-name" title="Click your name to change registration details" style="all:unset; cursor:pointer; color:var(--gold); font-weight:800; text-decoration:underline;">${esc(user.name)}</button> 🙏</h1>
+          <p>Your farm, simplified. <span style="font-size:0.82rem; color:var(--gold); cursor:pointer;" onclick="location.hash='#/profile'">(Click your name to change registration details)</span></p>
+        </div>
+      </header>
       <section class="stats">
         <div class="stat"><b>${mine.length}</b><span>My pools</span></div>
         <div class="stat"><b>${qty}</b><span>Quintals pooled</span></div>
@@ -65,22 +77,211 @@
         <a class="tile hot" href="#/gear"><div class="ico">🚜</div><h3>Farm Gear</h3>
           <p>Rent or buy tractors, power tillers, sprayers, ploughs &amp; tools from farmers nearby — or earn by renting out your idle equipment.</p><span class="soon live">Open →</span></a>
       </section>
-      <section class="profile" aria-label="Your profile">
+      <section class="profile" aria-label="Your registered details">
+        <div class="profile-edit-banner">
+          <div>
+            <h2 style="font-size:1.15rem; margin:0; display:flex; align-items:center; gap:8px;">🧑‍🌾 Verified Registration Details</h2>
+            <small style="color:var(--muted);">Click your name or the button to update your registered information.</small>
+          </div>
+          <button type="button" class="btn sm" onclick="location.hash='#/profile'" style="background:linear-gradient(135deg, var(--gold), var(--gold-d)); color:#07130c; font-weight:700;">✏️ Change Registration Details</button>
+        </div>
         ${[
-          ['Mobile', user.phone],
+          ['Full Name', user.name],
+          ['Mobile Number', user.phone],
           ['State', user.state],
-          ['District', user.district || '—'],
-          ['Village', user.village || '—'],
-          ['Nearest Mandi', user.nearestMandi || '—'],
-          ['Land Size', user.landSize ? user.landSize + ' acres' : '—'],
-          ['Scale', user.farmCategory || '—'],
-          ['Irrigation', user.irrigation || '—'],
-          ['Crops', (user.crops || []).join(', ') || '—'],
-          ['Equipment', (user.equipment || []).join(', ') || '—']
+          ['District / Tehsil', user.district || '—'],
+          ['Village / Panchayat', user.village || '—'],
+          ['Nearest APMC Mandi', user.nearestMandi || '—'],
+          ['Land Holding', user.landSize ? user.landSize + ' acres' : '—'],
+          ['Farmer Category', user.farmCategory || '—'],
+          ['Primary Irrigation', user.irrigation || '—'],
+          ['Crops Cultivated', (user.crops || []).join(', ') || '—'],
+          ['Machinery & Tools', (user.equipment || []).join(', ') || '—']
         ]
           .filter(([_, v]) => v && v !== '—')
           .map(([k, v]) => `<div><small>${k}</small><strong>${esc(v)}</strong></div>`).join('')}
       </section>`;
+
+    view.querySelector('#top-user-name')?.addEventListener('click', () => { location.hash = '#/profile'; });
+  }
+
+  async function editProfile(root) {
+    const userCrops = new Set(user.crops || []);
+    const userEquip = new Set(user.equipment || []);
+
+    root.innerHTML = `
+      <header class="topbar">
+        <div>
+          <h1>Change Registration Details 📝</h1>
+          <p>Update your registered name, location, land holding, crops, and machinery.</p>
+        </div>
+        <a class="btn ghost" href="#/home">← Back to Dashboard</a>
+      </header>
+      <form class="formcard" id="ep-form" novalidate style="max-width:760px;">
+        <fieldset class="pricebox">
+          <legend>👤 Personal &amp; Contact Details</legend>
+          <div class="row">
+            <div class="field">
+              <label>Full Name</label>
+              <input id="ep-name" value="${esc(user.name)}" maxlength="60" required placeholder="Your full name" />
+            </div>
+            <div class="field">
+              <label>Mobile Number (Verified Login ID)</label>
+              <input value="${esc(user.phone)}" disabled style="opacity:0.75; cursor:not-allowed;" />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="pricebox">
+          <legend>📍 Location &amp; Mandi</legend>
+          <div class="row">
+            <div class="field">
+              <label>State</label>
+              <select id="ep-state">
+                ${STATES.map((s) => `<option ${s === user.state ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field">
+              <label>District</label>
+              <input id="ep-dist" value="${esc(user.district || '')}" placeholder="e.g. Sehore" maxlength="60" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Village / Town</label>
+              <input id="ep-vill" value="${esc(user.village || '')}" placeholder="e.g. Bilkisganj" maxlength="60" />
+            </div>
+            <div class="field">
+              <label>Nearest Mandi</label>
+              <input id="ep-mandi" value="${esc(user.nearestMandi || '')}" placeholder="e.g. Sehore Krishi Upaj Mandi" maxlength="80" />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="pricebox">
+          <legend>🌱 Farm Profile</legend>
+          <div class="row">
+            <div class="field">
+              <label>Land Size (Acres)</label>
+              <input id="ep-land" type="number" step="0.1" min="0" max="10000" value="${user.landSize != null ? user.landSize : ''}" placeholder="e.g. 4.5" />
+            </div>
+            <div class="field">
+              <label>Farm Scale / Category</label>
+              <select id="ep-scale">
+                <option value="">Select scale</option>
+                ${SCALES.map((sc) => `<option ${sc === user.farmCategory ? 'selected' : ''}>${sc}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Primary Irrigation Source</label>
+            <select id="ep-irrig">
+              <option value="">Select irrigation source</option>
+              ${IRRIGATIONS.map((ir) => `<option ${ir === user.irrigation ? 'selected' : ''}>${ir}</option>`).join('')}
+            </select>
+          </div>
+        </fieldset>
+
+        <fieldset class="pricebox">
+          <legend>🌾 Crops You Grow (Click to toggle)</legend>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;" id="crop-chips">
+            ${ALL_CROPS.map((c) => `<button type="button" class="btn sm ${userCrops.has(c) ? '' : 'ghost'}" data-crop="${esc(c)}" style="cursor:pointer;">${userCrops.has(c) ? '✓' : '＋'} ${esc(c)}</button>`).join('')}
+          </div>
+        </fieldset>
+
+        <fieldset class="pricebox">
+          <legend>🚜 Equipment Owned (Click to toggle)</legend>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;" id="equip-chips">
+            ${ALL_EQUIP.map((eq) => `<button type="button" class="btn sm ${userEquip.has(eq) ? '' : 'ghost'}" data-equip="${esc(eq)}" style="cursor:pointer;">${userEquip.has(eq) ? '✓' : '＋'} ${esc(eq)}</button>`).join('')}
+          </div>
+        </fieldset>
+
+        <fieldset class="pricebox">
+          <legend>🔒 Security (Optional)</legend>
+          <div class="field">
+            <label>New Password (leave empty to keep current password)</label>
+            <input id="ep-pass" type="password" minlength="6" placeholder="At least 6 characters" />
+          </div>
+        </fieldset>
+
+        <div class="error" id="ep-err" role="alert"></div>
+        <div class="pa" style="margin-top:16px; display:flex; gap:12px;">
+          <button class="btn" type="submit" id="ep-submit" style="font-weight:700;">💾 Save Account Details</button>
+          <a class="btn ghost" href="#/home">Cancel</a>
+        </div>
+      </form>
+    `;
+
+    const cropChips = root.querySelectorAll('#crop-chips button');
+    cropChips.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const c = btn.dataset.crop;
+        if (userCrops.has(c)) {
+          userCrops.delete(c);
+          btn.classList.add('ghost');
+          btn.textContent = '＋ ' + c;
+        } else {
+          userCrops.add(c);
+          btn.classList.remove('ghost');
+          btn.textContent = '✓ ' + c;
+        }
+      });
+    });
+
+    const equipChips = root.querySelectorAll('#equip-chips button');
+    equipChips.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const eq = btn.dataset.equip;
+        if (userEquip.has(eq)) {
+          userEquip.delete(eq);
+          btn.classList.add('ghost');
+          btn.textContent = '＋ ' + eq;
+        } else {
+          userEquip.add(eq);
+          btn.classList.remove('ghost');
+          btn.textContent = '✓ ' + eq;
+        }
+      });
+    });
+
+    const form = root.querySelector('#ep-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = root.querySelector('#ep-err');
+      errBox.textContent = '';
+      const submitBtn = root.querySelector('#ep-submit');
+      submitBtn.disabled = true;
+
+      const body = {
+        name: root.querySelector('#ep-name').value.trim(),
+        state: root.querySelector('#ep-state').value,
+        district: root.querySelector('#ep-dist').value.trim(),
+        village: root.querySelector('#ep-vill').value.trim(),
+        nearestMandi: root.querySelector('#ep-mandi').value.trim(),
+        landSize: root.querySelector('#ep-land').value ? Number(root.querySelector('#ep-land').value) : null,
+        farmCategory: root.querySelector('#ep-scale').value,
+        irrigation: root.querySelector('#ep-irrig').value,
+        crops: Array.from(userCrops),
+        equipment: Array.from(userEquip),
+        newPassword: root.querySelector('#ep-pass').value || undefined
+      };
+
+      try {
+        const res = await api('/me', { method: 'PUT', body });
+        user = res.user;
+        window.KS.user = user;
+        localStorage.setItem('ks_user', JSON.stringify(user));
+
+        $('uname').textContent = user.name;
+        $('avatar').textContent = user.name.split(' ')[0][0].toUpperCase();
+
+        toast('Registration details updated successfully! ✅', 'ok');
+        location.hash = '#/home';
+      } catch (err) {
+        errBox.textContent = err.message || 'Failed to update registration details.';
+        submitBtn.disabled = false;
+      }
+    });
   }
 
   async function route() {
@@ -92,6 +293,7 @@
     window.scrollTo(0, 0);
     if (joinMatch && !location.hash) cleanup = await Pools.join(view, joinMatch[1]);
     else if (h === '/home') await home();
+    else if (h === '/profile') cleanup = await editProfile(view);
     else if (h === '/pools') cleanup = await Pools.list(view);
     else if (h === '/pools/new') cleanup = await Pools.create(view);
     else if (h.startsWith('/pool/')) cleanup = await Pools.detail(view, h.split('/')[2]);

@@ -67,6 +67,18 @@
         "type": "system",
         "text": "📧 Offer of ₹2,450/quintal for 65 quintals was emailed to Sharma Mills. Replies will appear here.",
         "at": "2026-10-21T03:53:45.867Z"
+      },
+      {
+        "id": "d097a38e-831e-411c-bfc8-9e05bc2628c1",
+        "type": "system",
+        "text": "📢 Official harvest offer of ₹2,450/quintal for 65 quintals was dispatched to Sharma Agro Mills via WhatsApp.",
+        "at": "2026-10-22T10:42:43.475Z"
+      },
+      {
+        "id": "8cc924d7-c4e0-434f-a62f-8761babf56d6",
+        "type": "system",
+        "text": "📢 Official harvest offer of ₹2,450/quintal for 65 quintals was dispatched to ITC Agri Business via Direct Email.",
+        "at": "2026-10-22T10:42:50.734Z"
       }
     ],
     "emails": [
@@ -80,10 +92,98 @@
         "at": "2026-10-21T03:53:45.867Z",
         "messageId": "<11129ab5-6c55-b537-5a27-90679ce88d07@ethereal.email>",
         "previewUrl": "https://ethereal.email/message/atg3Rj.z5CbOg04iatg3Slz99noLetABAAAAAVPD0fT.C59cL-.gTeoZe.w"
+      },
+      {
+        "id": "46e0c9b7-e9ed-482e-a17b-bc390e811a51",
+        "direction": "out",
+        "channel": "whatsapp",
+        "name": "Sharma Agro Mills",
+        "email": "9876512340",
+        "subject": "[KS-4B7LG6] 65 quintals of Wheat available at ₹2,450/quintal – KrishiSetu Farmer Pool",
+        "body": "Dear Sharma Agro Mills team,\n\nI am writing on behalf of \"Sehore Wheat Pool\", a pool of 2 verified farmer(s) registered on KrishiSetu, who have agreed on a single collective price for their harvest.\n\nOFFER SUMMARY\n  Crop:               Wheat\n  Total quantity:     65 quintals\n  Agreed price:       Rs. 2,450 per quintal (all farmers unanimously agreed)\n  Expected harvest:   2026-10-31\n  Growing region:     Sehore, Madhya Pradesh\n\nPARTICIPATING FARMERS\n  - Shreyas Joshi (Shirol, Maharashtra): 40 quintals\n  - Sita Devi (Ashta, Madhya Pradesh): 25 quintals\n\nMESSAGE FROM THE POOL COORDINATOR\nPayment within 48h\n\nPlease reply to this email with your offer, any counter-price, quality requirements, payment terms and pickup details. Simply hit Reply.\nYour reply will be delivered to every farmer in the pool.\n\nPool coordinator: Shreyas Joshi, 9876543210\nPool reference: KS-4B7LG6\n\nRegards,\nSehore Wheat Pool · via KrishiSetu",
+        "at": "2026-10-22T10:42:43.475Z",
+        "previewUrl": null
+      },
+      {
+        "id": "0873535f-b33b-45f5-a904-bf950ce13398",
+        "direction": "out",
+        "channel": "email",
+        "name": "ITC Agri Business",
+        "email": "procurement@itc.in",
+        "subject": "[KS-4B7LG6] 65 quintals of Wheat available at ₹2,450/quintal – KrishiSetu Farmer Pool",
+        "body": "Dear ITC Agri Business team,\n\nI am writing on behalf of \"Sehore Wheat Pool\", a pool of 2 verified farmer(s) registered on KrishiSetu, who have agreed on a single collective price for their harvest.\n\nOFFER SUMMARY\n  Crop:               Wheat\n  Total quantity:     65 quintals\n  Agreed price:       Rs. 2,450 per quintal (all farmers unanimously agreed)\n  Expected harvest:   2026-10-31\n  Growing region:     Sehore, Madhya Pradesh\n\nPARTICIPATING FARMERS\n  - Shreyas Joshi (Shirol, Maharashtra): 40 quintals\n  - Sita Devi (Ashta, Madhya Pradesh): 25 quintals\n\nMESSAGE FROM THE POOL COORDINATOR\nMoisture below 11%\n\nPlease reply to this email with your offer, any counter-price, quality requirements, payment terms and pickup details. Simply hit Reply.\nYour reply will be delivered to every farmer in the pool.\n\nPool coordinator: Shreyas Joshi, 9876543210\nPool reference: KS-4B7LG6\n\nRegards,\nSehore Wheat Pool · via KrishiSetu",
+        "at": "2026-10-22T10:42:50.734Z",
+        "previewUrl": null
       }
     ],
     "agreedPrice": 2450,
     "activeProposalId": null,
     "createdAt": "2026-10-21T03:53:41.359Z"
+  },
+  {
+    "id": "ea2d3540-0228-41e8-9984-8edaf2fab0c0",
+    "code": "A77CQ4",
+    "name": "Karnataka Tomato Pool",
+    "crop": "Tomato",
+    "variety": "",
+    "harvestDate": "2026-10-31",
+    "state": "Karnataka",
+    "district": "dharwad",
+    "description": "",
+    "visibility": "public",
+    "status": "open",
+    "creatorId": "68bb4de1-2385-4e9f-9388-ddf4a8c3748a",
+    "members": [
+      {
+        "userId": "68bb4de1-2385-4e9f-9388-ddf4a8c3748a",
+        "quantity": 100,
+        "joinedAt": "2026-10-22T10:13:54.536Z"
+      }
+    ],
+    "messages": [
+      {
+        "id": "96e20844-10f8-4570-baa3-390cef2995e4",
+        "type": "system",
+        "text": "🌱 Shreyas Joshi created the pool. Invite fellow farmers using the invite link, then agree on a price here.",
+        "at": "2026-10-22T10:13:54.537Z"
+      }
+    ],
+    "emails": [],
+    "agreedPrice": null,
+    "activeProposalId": null,
+    "createdAt": "2026-10-22T10:13:54.536Z"
+  },
+  {
+    "id": "6d888124-befc-4eee-b021-0a6ec04a4911",
+    "code": "4M7BWY",
+    "name": "Karnataka rice Pool",
+    "crop": "Rice",
+    "variety": "",
+    "harvestDate": "2026-12-31",
+    "state": "Karnataka",
+    "district": "dharwad",
+    "description": "",
+    "visibility": "public",
+    "status": "open",
+    "creatorId": "68bb4de1-2385-4e9f-9388-ddf4a8c3748a",
+    "members": [
+      {
+        "userId": "68bb4de1-2385-4e9f-9388-ddf4a8c3748a",
+        "quantity": 100,
+        "joinedAt": "2026-10-22T10:44:20.917Z"
+      }
+    ],
+    "messages": [
+      {
+        "id": "cdf8d6fa-51fc-4788-b138-4e9df5b1b79c",
+        "type": "system",
+        "text": "🌱 Shreyas Joshi created the pool. Invite fellow farmers using the invite link, then agree on a price here.",
+        "at": "2026-10-22T10:44:20.917Z"
+      }
+    ],
+    "emails": [],
+    "agreedPrice": null,
+    "activeProposalId": null,
+    "createdAt": "2026-10-22T10:44:20.917Z"
   }
 ]

@@ -1,18 +1,28 @@
 [
   {
     "id": "b7875485-c65e-4c4a-a4cf-a62a93c504ae",
-    "name": "Ramesh Patil",
+    "name": "Shreyas Joshi",
     "phone": "9876543210",
-    "passwordHash": "$2a$10$6gyP35bgA.BAOButormRne4J4FagMoWYEIeZ9p.m6cIjet20jEv8y",
-    "state": "Madhya Pradesh",
-    "village": "Sehore",
+    "passwordHash": "$2a$10$2bVb5QdnNqpvcLqWWR189OeHQM9MDuB0yFFgb0MQRSyA39zvo1H6i",
+    "state": "Maharashtra",
+    "village": "Shirol",
     "crops": [
-      "Wheat",
+      "Sugarcane",
       "Soybean",
-      "Gram"
+      "Wheat"
     ],
-    "landSize": 4.5,
-    "createdAt": "2026-10-21T03:53:41.270Z"
+    "landSize": 6.5,
+    "createdAt": "2026-10-21T03:53:41.270Z",
+    "district": "Kolhapur",
+    "nearestMandi": "Kolhapur Mandi",
+    "farmCategory": "Medium (5 – 10 acres)",
+    "irrigation": "Borewell / Tube well",
+    "equipment": [
+      "Tractor",
+      "Rotavator",
+      "Trolley"
+    ],
+    "updatedAt": "2026-10-22T09:52:56.254Z"
   },
   {
     "id": "demo-farmer-alt",

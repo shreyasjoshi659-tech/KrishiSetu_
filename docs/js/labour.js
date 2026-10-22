@@ -22,17 +22,25 @@ window.Labour = (() => {
   }
 
   function workerCard(w) {
-    const nb = w.nearScore >= 2 ? '<span class="nearb">📍 In your district</span>' : w.nearScore === 1 ? '<span class="nearb s">📍 In your state</span>' : '';
-    return `<article class="wcard">
-      ${nb}
-      <div class="wc-top"><div class="avatar wav">${initial(w.name)}</div>
-        <div class="wc-id"><h3>${esc(w.name)}</h3><small>📍 ${esc([w.village, w.district, w.state].filter(Boolean).join(', '))}</small></div>
-        <div class="wc-rate"><b>${money(w.rate)}</b><small>${per(w.rateType)}</small></div></div>
-      ${w.headline ? `<p class="wc-head">${esc(w.headline)}</p>` : ''}
-      <div class="chips">${w.skills.slice(0, 4).map((s) => `<span class="skill">${ico(s)} ${esc(s)}</span>`).join('')}${w.skills.length > 4 ? `<span class="skill more">+${w.skills.length - 4}</span>` : ''}</div>
-      <p class="wc-desc">${esc(w.description)}</p>
-      <div class="wc-foot"><span>${w.experience ? '⭐ ' + w.experience + ' yr exp' : '🌱 New to work'}${w.travelKm ? ' · 🚲 ≤' + w.travelKm + ' km' : ''}</span>
-        <button class="btn sm" data-hire="${w.id}">Hire / Contact</button></div></article>`;
+    const nb = w.nearScore >= 2 ? '<span class="badge st-resp">📍 In your district</span>' : w.nearScore === 1 ? '<span class="badge st-neg">📍 In your state</span>' : '';
+    return `<article class="wcard wlist-item">
+      <div class="wlist-left"><div class="avatar wav">${initial(w.name)}</div></div>
+      <div class="wlist-main">
+        <div class="wlist-header">
+          <h3>${esc(w.name)}</h3>
+          ${nb}
+          <span class="wlist-exp">${w.experience ? '⭐ ' + w.experience + ' yr exp' : '🌱 New to work'}</span>
+          <span class="wlist-loc">📍 ${esc([w.village, w.district, w.state].filter(Boolean).join(', '))}${w.travelKm ? ' · 🚲 ≤' + w.travelKm + ' km radius' : ''}</span>
+        </div>
+        ${w.headline ? `<p class="wc-head">${esc(w.headline)}</p>` : ''}
+        <p class="wc-desc">${esc(w.description)}</p>
+        <div class="chips">${w.skills.slice(0, 6).map((s) => `<span class="skill">${ico(s)} ${esc(s)}</span>`).join('')}${w.skills.length > 6 ? `<span class="skill more">+${w.skills.length - 6}</span>` : ''}</div>
+      </div>
+      <div class="wlist-action">
+        <div class="wc-rate"><b>${money(w.rate)}</b><small>${per(w.rateType)}</small></div>
+        <button class="btn sm" data-hire="${w.id}">Hire / Contact</button>
+      </div>
+    </article>`;
   }
 
   function hireModal(w) {
@@ -75,15 +83,17 @@ window.Labour = (() => {
           <h1>आसपास के कुशल खेत श्रमिक खोजें</h1>
           <p>बुवाई, निराई, कटाई व स्प्रे के लिए आसपास के श्रमिकों को संपर्क करें — दरें और शर्तें पहले से स्पष्ट।</p>
         </div>
-        <form class="mh-search" id="sf" role="search">
-          <span>🔍</span>
-          <input id="f-q" placeholder="कार्य खोजें: जुताई, निराई, स्प्रे, कटाई, ट्रैक्टर चालक…" autocomplete="off" />
-          <button class="btn sm" type="submit">खोजें · Search</button>
-        </form>
         <div class="mh-chips" id="qc">
           <button type="button" data-s="" class="on">सभी कार्य (All)</button>
           ${SKILLS.slice(0, 9).map(([s, i]) => `<button type="button" data-s="${s}">${s.split(' (')[0]}</button>`).join('')}
+          <button type="button" id="btn-other" class="btn-other">🔍 Other · अन्य</button>
         </div>
+        <form class="mh-search" id="sf" role="search" hidden style="margin-top:6px;">
+          <span>🔍</span>
+          <input id="f-q" placeholder="कार्य खोजें: जुताई, निराई, स्प्रे, कटाई, ट्रैक्टर चालक…" autocomplete="off" />
+          <button class="btn sm" type="submit">खोजें · Search</button>
+          <button type="button" class="btn ghost sm" id="close-search" title="Close search" style="padding:4px 10px; font-size:0.82rem;">✕</button>
+        </form>
       </section>
       <div class="mkt-bar">
         ${tabs('find')}
@@ -98,7 +108,7 @@ window.Labour = (() => {
         <select id="f-sort"><option value="near">Nearest first</option><option value="cheap">Lowest price</option><option value="exp">Most experienced</option><option value="new">Newest</option></select>
       </section>
       <div class="muted" id="count"></div>
-      <section class="wgrid" id="grid"><div class="muted">Loading…</div></section>`;
+      <section class="wgrid wlist" id="grid"><div class="muted">Loading…</div></section>`;
     const $ = (s) => root.querySelector(s);
     let workers = [], timer;
     async function load() {
@@ -114,11 +124,43 @@ window.Labour = (() => {
     root.querySelectorAll('.lf input').forEach((s) => s.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(load, 300); }));
     $('#f-q').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(load, 300); });
     $('#sf').addEventListener('submit', (e) => { e.preventDefault(); load(); });
-    $('#qc').addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      root.querySelectorAll('#qc button').forEach((x) => x.classList.toggle('on', x === b));
-      $('#f-skill').value = b.dataset.s; load();
+
+    const sf = $('#sf');
+    const btnOther = $('#btn-other');
+    btnOther.addEventListener('click', () => {
+      const isHidden = sf.hidden;
+      sf.hidden = !isHidden;
+      if (!sf.hidden) {
+        root.querySelectorAll('#qc button').forEach((x) => x.classList.remove('on'));
+        btnOther.classList.add('on');
+        $('#f-skill').value = '';
+        $('#f-q').focus();
+      } else {
+        btnOther.classList.remove('on');
+        root.querySelector('#qc button[data-s=""]').classList.add('on');
+        $('#f-q').value = '';
+        load();
+      }
     });
+
+    $('#close-search')?.addEventListener('click', () => {
+      sf.hidden = true;
+      btnOther.classList.remove('on');
+      root.querySelector('#qc button[data-s=""]').classList.add('on');
+      $('#f-q').value = '';
+      load();
+    });
+
+    $('#qc').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b || b === btnOther) return;
+      root.querySelectorAll('#qc button').forEach((x) => x.classList.toggle('on', x === b));
+      sf.hidden = true;
+      $('#f-q').value = '';
+      $('#f-skill').value = b.dataset.s || '';
+      load();
+    });
+
     $('#my-req').addEventListener('click', () => requestsModal('in'));
     $('#grid').addEventListener('click', (e) => {
       const b = e.target.closest('[data-hire]'); if (!b) return;

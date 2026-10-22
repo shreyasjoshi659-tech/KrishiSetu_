@@ -3,20 +3,109 @@
     "id": "8537d530-8441-407a-890a-0c58017cc748",
     "userId": "58265b55-bac9-42f6-bbfa-f49b7310019e",
     "createdAt": "2026-10-21T09:27:06.432Z",
-    "headline": "",
-    "description": "Experienced weeder",
-    "conditions": "Lunch needed",
+    "headline": "Skilled farm worker for weeding and harvesting",
+    "description": "Experienced farm worker for seasonal crops, manual weeding and tractor assistance.",
+    "conditions": "Lunch and clean water to be provided on farm",
     "skills": [
       "Weeding",
-      "Ploughing"
+      "Ploughing",
+      "Transplanting"
     ],
     "rateType": "day",
     "rate": 500,
     "state": "Gujarat",
-    "district": "",
-    "experience": 0,
-    "travelKm": 0,
+    "district": "Anand",
+    "experience": 4,
+    "travelKm": 15,
     "available": true,
     "updatedAt": "2026-10-21T09:27:06.432Z"
+  },
+  {
+    "id": "labour-balwinder-1",
+    "userId": "546772de-9ea6-4179-9cf4-35d3b55236bc",
+    "createdAt": "2026-10-21T10:00:00.000Z",
+    "headline": "Expert tractor driver, laser leveling & heavy ploughing",
+    "description": "12 years experience operating 45-75 HP tractors, rotavator, multi-crop seed drill and combines.",
+    "conditions": "Standard 8-hour shift, payment upon day completion",
+    "skills": [
+      "Tractor driving",
+      "Ploughing",
+      "Threshing",
+      "Harvesting"
+    ],
+    "rateType": "day",
+    "rate": 650,
+    "state": "Punjab",
+    "district": "Ludhiana",
+    "experience": 12,
+    "travelKm": 35,
+    "available": true,
+    "updatedAt": "2026-10-21T10:00:00.000Z"
+  },
+  {
+    "id": "labour-sita-1",
+    "userId": "de993284-0698-413f-b934-fea531d0f54e",
+    "createdAt": "2026-10-21T11:00:00.000Z",
+    "headline": "Specialist in manual crop weeding, vegetable plucking & harvesting",
+    "description": "Quick and meticulous team lead for cotton plucking, soybean weeding, and wheat harvest.",
+    "conditions": "Morning shift preferred (7 AM - 3 PM)",
+    "skills": [
+      "Weeding",
+      "Harvesting",
+      "Plucking (fruit / tea / cotton)",
+      "Transplanting"
+    ],
+    "rateType": "day",
+    "rate": 400,
+    "state": "Madhya Pradesh",
+    "district": "Sehore",
+    "experience": 7,
+    "travelKm": 20,
+    "available": true,
+    "updatedAt": "2026-10-21T11:00:00.000Z"
+  },
+  {
+    "id": "labour-ramesh-1",
+    "userId": "demo-farmer-alt",
+    "createdAt": "2026-10-21T12:00:00.000Z",
+    "headline": "Irrigation, drip management & fertilizer spraying specialist",
+    "description": "Experienced in precision pesticide spraying, drip pipe layout and field bunding.",
+    "conditions": "Protective gear to be supplied if spraying concentrated pesticides",
+    "skills": [
+      "Pesticide spraying",
+      "Irrigation / sprinkling",
+      "Fertilizer spreading",
+      "Sowing"
+    ],
+    "rateType": "day",
+    "rate": 450,
+    "state": "Madhya Pradesh",
+    "district": "Sehore",
+    "experience": 8,
+    "travelKm": 25,
+    "available": true,
+    "updatedAt": "2026-10-21T12:00:00.000Z"
+  },
+  {
+    "id": "labour-suresh-1",
+    "userId": "c865be32-f1b9-476b-9bbb-95155b2b2030",
+    "createdAt": "2026-10-21T13:00:00.000Z",
+    "headline": "Certified drone spraying operator & orchard pruner",
+    "description": "Agricultural drone certified pilot covering up to 30 acres/day. Fast & uniform coverage.",
+    "conditions": "Battery charging point required at field site",
+    "skills": [
+      "Drone spraying",
+      "Pesticide spraying",
+      "Pruning",
+      "Orchard work"
+    ],
+    "rateType": "hour",
+    "rate": 180,
+    "state": "Gujarat",
+    "district": "Anand",
+    "experience": 5,
+    "travelKm": 40,
+    "available": true,
+    "updatedAt": "2026-10-21T13:00:00.000Z"
   }
 ]
