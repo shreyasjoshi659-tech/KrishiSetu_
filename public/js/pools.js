@@ -240,21 +240,27 @@ window.Pools = (() => {
       else form = `<form id="of">
           <div class="row">
             <div class="field"><label>Company / wholesaler name</label><input id="o-name" required placeholder="e.g. Sharma Agro Mills / ITC" /></div>
-            <div class="field"><label>Buyer WhatsApp / Mobile (optional)</label><input id="o-phone" type="tel" placeholder="e.g. 98765 12340" /></div>
+            <div class="field"><label>Buyer email (for ready-made email)</label><input id="o-email" type="email" placeholder="procurement@company.com" /></div>
           </div>
-          <div class="field"><label>Buyer email (optional)</label><input id="o-email" type="email" placeholder="procurement@company.com" /></div>
-          <div class="field"><label>Message from coordinator (optional)</label><textarea id="o-note" rows="2" maxlength="1000" placeholder="Delivery terms, quality grade, payment timeline…"></textarea></div>
+          <div class="row">
+            <div class="field"><label>Buyer WhatsApp / Mobile (optional)</label><input id="o-phone" type="tel" placeholder="e.g. 98765 12340" /></div>
+            <div class="field"><label>Message from coordinator (optional)</label><input id="o-note" maxlength="1000" placeholder="Delivery terms, quality grade, payment timeline…" /></div>
+          </div>
           <div class="error" id="o-err"></div>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
-            <button type="button" class="btn wa" id="btn-wa-dispatch" style="flex:1; min-width:180px; display:inline-flex; align-items:center; justify-content:center; gap:8px;">💬 Send via WhatsApp</button>
-            <button type="button" class="btn" id="btn-mail-dispatch" style="flex:1; min-width:180px; display:inline-flex; align-items:center; justify-content:center; gap:8px;">✉️ Open in Email (mailto)</button>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+            <button type="button" class="btn" id="btn-mail-dispatch" style="flex:1.2; min-width:210px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg, #ea4335, #c5221f); border-color:#ea4335; color:#fff; font-weight:700;">
+              <span>✉️</span> 1-Tap Ready Email (Gmail / Mail App)
+            </button>
+            <button type="button" class="btn wa" id="btn-wa-dispatch" style="flex:1; min-width:180px; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+              <span>💬</span> Send via WhatsApp
+            </button>
           </div>
         </form>
         <details class="manual" style="margin-top:14px;"><summary>Buyer replied by phone/WhatsApp? Log it</summary>
         <form id="rf"><input id="r-name" placeholder="Buyer name" required /><textarea id="r-body" rows="2" placeholder="What did they say?" required></textarea><button class="btn ghost sm">Share with pool</button></form></details>`;
       const notice = `<div class="note" style="border-color: rgba(95,211,141,0.35); background: rgba(95,211,141,0.08); display:flex; align-items:center; gap:10px; margin-bottom:12px;">
         <span style="font-size:1.2rem;">⚡</span>
-        <div><b>Live Direct Outreach Active</b>: Send collective harvest quotations directly via WhatsApp or your native email client with 1 tap.</div>
+        <div><b>1-Tap Real-World Outreach</b>: Generates complete, official harvest quotations with unanimous price &amp; member details. Opens directly in your <b>Gmail Web</b>, <b>Default Mail App</b>, or <b>WhatsApp</b> ready to send with 1 click.</div>
       </div>`;
       $('#buyers').innerHTML = `<div class="panel-card"><h3>📬 Buyers <small class="muted">${pool.emails.filter((e) => e.direction === 'out').length} contacted</small></h3>${isCoord() ? notice : ''}${form}
         <div class="thread">${thread || ''}</div></div>`;
@@ -288,7 +294,7 @@ window.Pools = (() => {
         return;
       }
       if (channel === 'email' && !buyerEmail) {
-        if (errBox) errBox.textContent = 'Please enter the buyer email address to open email.';
+        if (errBox) errBox.textContent = 'Please enter the buyer email address to open the readymade email.';
         $('#o-email')?.focus();
         return;
       }
@@ -321,10 +327,58 @@ window.Pools = (() => {
           await call('/outreach', body);
           K().toast('WhatsApp quotation dispatched! 💬');
         } else {
+          // Readymade Email URLs
           const mailtoUrl = `mailto:${encodeURIComponent(buyerEmail)}?subject=${encodeURIComponent(preview.subject)}&body=${encodeURIComponent(preview.text)}`;
-          window.location.href = mailtoUrl;
+          const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(buyerEmail)}&su=${encodeURIComponent(preview.subject)}&body=${encodeURIComponent(preview.text)}`;
+          const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(buyerEmail)}&subject=${encodeURIComponent(preview.subject)}&body=${encodeURIComponent(preview.text)}`;
+
+          // 1-Tap: Directly launch host's Gmail Web in new tab with the ready draft
+          window.open(gmailUrl, '_blank');
+
+          // Log the dispatch on the backend
           await call('/outreach', body);
-          K().toast('Email quotation opened & logged! ✉️');
+          K().toast('Readymade email launched & logged! ✉️');
+
+          // Display Readymade Email Dispatch Sheet with 1-tap launchers
+          const m = modal(`
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+              <span style="font-size:1.8rem;">✉️</span>
+              <div>
+                <h2 style="margin:0; font-size:1.3rem;">Readymade Email Created for ${esc(buyerName)}</h2>
+                <small style="color:var(--muted);">Full official harvest quotation pre-filled and ready to send.</small>
+              </div>
+            </div>
+            <div style="background:rgba(0,0,0,0.35); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:16px;">
+              <div style="font-size:0.88rem; margin-bottom:6px;"><span style="color:var(--muted);">To:</span> <b>${esc(buyerEmail)}</b></div>
+              <div style="font-size:0.88rem; margin-bottom:10px;"><span style="color:var(--muted);">Subject:</span> <b>${esc(preview.subject)}</b></div>
+              <div style="max-height:180px; overflow-y:auto; background:rgba(0,0,0,0.25); border-radius:8px; padding:10px; font-family:monospace; font-size:0.82rem; white-space:pre-wrap; color:#cfdccf; line-height:1.4;">${esc(preview.text)}</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <a class="btn" href="${gmailUrl}" target="_blank" rel="noopener" style="background:linear-gradient(135deg, #ea4335, #c5221f); border-color:#ea4335; color:#fff; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+                  <span>🔴</span> Re-open Gmail Web
+                </a>
+                <a class="btn" href="${mailtoUrl}" style="background:linear-gradient(135deg, var(--green), var(--green-d)); text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+                  <span>📬</span> Open in Mail App
+                </a>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <a class="btn ghost sm" href="${outlookUrl}" target="_blank" rel="noopener" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+                  <span>🔵</span> Open in Outlook Web
+                </a>
+                <button type="button" class="btn ghost sm" id="btn-copy-draft" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                  <span>📋</span> Copy Entire Draft
+                </button>
+              </div>
+              <button type="button" class="btn ghost sm" data-close style="margin-top:6px;">Done</button>
+            </div>
+          `);
+
+          m.el.querySelector('#btn-copy-draft')?.addEventListener('click', () => {
+            navigator.clipboard.writeText(`To: ${buyerEmail}\nSubject: ${preview.subject}\n\n${preview.text}`).then(() => {
+              K().toast('Email draft copied to clipboard! 📋');
+            });
+          });
         }
       } catch (err) {
         if (errBox) errBox.textContent = err.message || 'Failed to dispatch offer.';
