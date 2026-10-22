@@ -38,7 +38,7 @@
   $('avatar').textContent = first[0].toUpperCase();
   $('logout').addEventListener('click', logout);
 
-  const items = [['🏠', 'Home', '#/home'], ['🤝', 'Farmer Pools', '#/pools'], ['🧑‍🌾', 'Labour Connect', '#/labour'], ['🚜', 'Farm Gear', '#/gear']];
+  const items = [['🏠', 'Home', '#/home'], ['🤝', 'Farmer Pools', '#/pools'], ['🧑‍🌾', 'Labour Connect', '#/labour'], ['🚜', 'Farm Gear', '#/gear'], ['🌱', 'Vertical Farming', '#/vertical-farming']];
   const navHtml = items.map(([i, l, h]) => `<a href="${h}" data-h="${h}"><span class="ico">${i}</span>${l}</a>`).join('');
   $('nav').innerHTML = navHtml + `<a class="disabled"><span class="ico">✨</span>More soon</a>`;
   $('bnav').innerHTML = navHtml;
@@ -64,6 +64,8 @@
           <p>Short of hands? Hire skilled workers nearby for ploughing, weeding, spraying &amp; more — or list your own services and set your pay.</p><span class="soon live">Open →</span></a>
         <a class="tile hot" href="#/gear"><div class="ico">🚜</div><h3>Farm Gear</h3>
           <p>Rent or buy tractors, power tillers, sprayers, ploughs &amp; tools from farmers nearby — or earn by renting out your idle equipment.</p><span class="soon live">Open →</span></a>
+        <a class="tile hot" href="#/vertical-farming"><div class="ico">🌱</div><h3>Vertical Farming</h3>
+          <p>Track demo crop progress, connect with farm and delivery partners, compare operating assumptions, and explore sample produce plans.</p><span class="soon live">Open →</span></a>
       </section>
       <section class="profile" aria-label="Your profile">
         ${[
@@ -102,6 +104,7 @@
     else if (h === '/gear/mine') cleanup = await Gear.mine(view);
     else if (h === '/gear/new') cleanup = await Gear.form(view);
     else if (h.startsWith('/gear/edit/')) cleanup = await Gear.form(view, h.split('/')[3]);
+    else if (h === '/vertical-farming') cleanup = await VerticalFarming.render(view);
     else location.hash = '#/home';
   }
   window.addEventListener('hashchange', () => { if (location.pathname.startsWith('/join/')) history.replaceState(null, '', '/app' + location.hash); route(); });

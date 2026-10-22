@@ -2,13 +2,22 @@ const express = require('express');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { rateLimit } = require('express-rate-limit');
 const { col, DIR } = require('../lib/db');
 const { auth, users } = require('../lib/auth');
 
 const router = express.Router();
 const items = col('equipment');
+const uploads = col('equipment_uploads');
 const UPLOADS = path.join(DIR, 'uploads');
 fs.mkdirSync(UPLOADS, { recursive: true });
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Upload limit reached. Try again later.' },
+});
 
 const CATEGORIES = ['Tractors', 'Power tillers', 'Harvesters', 'Rotavators & cultivators', 'Ploughs & harrows', 'Seed drills & planters', 'Sprayers', 'Water pumps & irrigation', 'Threshers & reapers', 'Trailers & carts', 'Power tools', 'Hand tools', 'Drones', 'Other'];
 const RENT_UNITS = ['hour', 'day', 'week', 'month', 'acre', 'trip'];
@@ -24,13 +33,15 @@ function sniff(buf) {
 }
 
 // raw image upload (client downsizes before sending)
-router.post('/equipment/photo', auth, express.raw({ type: 'image/*', limit: '3mb' }), (req, res) => {
+router.post('/equipment/photo', auth, uploadLimiter, express.raw({ type: 'image/*', limit: '3mb' }), (req, res) => {
   const buf = req.body;
   if (!Buffer.isBuffer(buf) || !buf.length) return res.status(400).json({ error: 'No image received.' });
   const ext = sniff(buf);
   if (!ext) return res.status(400).json({ error: 'Only JPG, PNG or WEBP photos are allowed.' });
   const name = crypto.randomUUID() + '.' + ext;
   fs.writeFileSync(path.join(UPLOADS, name), buf);
+  uploads.rows.push({ fileName: name, userId: req.user.id, createdAt: new Date().toISOString() });
+  uploads.save();
   res.status(201).json({ url: '/uploads/' + name });
 });
 
@@ -47,20 +58,28 @@ function build(b, base) {
   const category = CATEGORIES.includes(b.category) ? b.category : 'Other';
   const rentRate = Number(b.rentRate), salePrice = Number(b.salePrice);
   if (type !== 'sale') {
-    if (!(rentRate > 0)) return { error: 'Enter the rent amount.' };
+    if (!Number.isFinite(rentRate) || !(rentRate > 0 && rentRate <= 100_000_000)) return { error: 'Enter a valid rent amount.' };
     if (!RENT_UNITS.includes(b.rentUnit)) return { error: 'Choose how rent is charged (per hour, day…).' };
   }
-  if (type !== 'rent' && !(salePrice > 0)) return { error: 'Enter the selling price.' };
+  if (type !== 'rent' && (!Number.isFinite(salePrice) || !(salePrice > 0 && salePrice <= 100_000_000))) {
+    return { error: 'Enter a valid selling price.' };
+  }
   const phone = String(b.contactPhone || '').replace(/[\s-]/g, '');
   if (!/^\+?\d{10,13}$/.test(phone)) return { error: 'Enter a valid contact phone number.' };
-  const photos = (Array.isArray(b.photos) ? b.photos : []).filter((p) => /^\/uploads\/[\w-]+\.(jpg|png|webp)$/.test(p)).slice(0, 5);
+  const existingPhotos = Array.isArray(base.existingPhotos) ? base.existingPhotos : [];
+  const photos = (Array.isArray(b.photos) ? b.photos : []).filter((p) => {
+    if (typeof p !== 'string' || !/^\/uploads\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(p)) return false;
+    const fileName = path.basename(p);
+    const owner = uploads.rows.find((entry) => entry.fileName === fileName);
+    return owner ? owner.userId === base.userId : existingPhotos.includes(p);
+  }).slice(0, 5);
   if (!photos.length) return { error: 'Add at least one photo of the equipment.' };
   return {
     value: {
-      ...base, title, category, type, brand: clean(b.brand, 40), year: Number(b.year) > 1950 && Number(b.year) <= new Date().getFullYear() + 1 ? Number(b.year) : null,
+      ...base, existingPhotos: undefined, title, category, type, brand: clean(b.brand, 40), year: Number.isInteger(Number(b.year)) && Number(b.year) > 1950 && Number(b.year) <= new Date().getFullYear() + 1 ? Number(b.year) : null,
       condition: ['new', 'good', 'fair', 'old'].includes(b.condition) ? b.condition : 'good', description: clean(b.description, 1000),
       rentRate: type === 'sale' ? null : rentRate, rentUnit: type === 'sale' ? null : b.rentUnit,
-      deposit: Number(b.deposit) > 0 && type !== 'sale' ? Number(b.deposit) : null, operatorIncluded: !!b.operatorIncluded, fuelIncluded: !!b.fuelIncluded,
+      deposit: Number.isFinite(Number(b.deposit)) && Number(b.deposit) > 0 && Number(b.deposit) <= 100_000_000 && type !== 'sale' ? Number(b.deposit) : null, operatorIncluded: !!b.operatorIncluded, fuelIncluded: !!b.fuelIncluded,
       salePrice: type === 'rent' ? null : salePrice, negotiable: !!b.negotiable,
       state: clean(b.state, 40), district: clean(b.district, 60), village: clean(b.village, 60),
       contactPhone: phone, whatsapp: !!b.whatsapp, photos,
@@ -115,7 +134,13 @@ router.post('/equipment', auth, (req, res) => {
 router.put('/equipment/:id', auth, (req, res) => {
   const i = items.rows.findIndex((x) => x.id === req.params.id && x.userId === req.user.id);
   if (i < 0) return res.status(404).json({ error: 'Listing not found.' });
-  const r = build(req.body || {}, { id: items.rows[i].id, userId: req.user.id, status: items.rows[i].status, createdAt: items.rows[i].createdAt });
+  const r = build(req.body || {}, {
+    id: items.rows[i].id,
+    userId: req.user.id,
+    status: items.rows[i].status,
+    createdAt: items.rows[i].createdAt,
+    existingPhotos: items.rows[i].photos,
+  });
   if (r.error) return res.status(400).json({ error: r.error });
   items.rows[i] = r.value;
   items.save();

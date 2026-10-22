@@ -1,0 +1,38 @@
+[
+  {
+    "id": "demo-task-operator-1",
+    "title": "Check nutrient levels",
+    "description": "Record the reservoir reading and report whether the nutrient mix needs adjustment.",
+    "requiredRole": "farm-operator",
+    "location": "Demo farm · Bengaluru",
+    "dueDate": "",
+    "status": "available",
+    "createdBy": null,
+    "assignedTo": null,
+    "isDemo": true
+  },
+  {
+    "id": "demo-task-delivery-1",
+    "title": "Deliver a harvest box",
+    "description": "Collect a packed greens box from the demo farm and complete a local customer hand-off.",
+    "requiredRole": "delivery-partner",
+    "location": "Demo delivery area · Bengaluru",
+    "dueDate": "",
+    "status": "available",
+    "createdBy": null,
+    "assignedTo": null,
+    "isDemo": true
+  },
+  {
+    "id": "demo-task-operator-2",
+    "title": "Log crop progress",
+    "description": "Update the crop stage and estimated harvest window for one growing rack.",
+    "requiredRole": "farm-operator",
+    "location": "Demo farm · Bengaluru",
+    "dueDate": "",
+    "status": "available",
+    "createdBy": null,
+    "assignedTo": null,
+    "isDemo": true
+  }
+]

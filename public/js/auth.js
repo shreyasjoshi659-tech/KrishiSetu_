@@ -30,14 +30,6 @@
     b.textContent = i.type === 'password' ? 'Show' : 'Hide';
   }));
 
-  const demoBtn = $('fill-demo');
-  if (demoBtn) {
-    demoBtn.addEventListener('click', () => {
-      $('l-phone').value = '9876543210';
-      $('l-pass').value = 'password123';
-    });
-  }
-
   if (location.pathname === '/register' || location.hash === '#register') {
     show('register');
   }

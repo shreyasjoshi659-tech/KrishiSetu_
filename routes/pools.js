@@ -1,11 +1,26 @@
 const express = require('express');
 const crypto = require('crypto');
+const { rateLimit } = require('express-rate-limit');
 const { col } = require('../lib/db');
-const { auth, userFromToken, users } = require('../lib/auth');
+const { auth, users } = require('../lib/auth');
 const mailer = require('../lib/mailer');
 
 const router = express.Router();
 const pools = col('pools');
+const mailSendLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Email send limit reached. Try again later.' },
+});
+const mailPollLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 6,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Reply check limit reached. Try again later.' },
+});
 
 // ---------- helpers ----------
 const clean = (s, max = 200) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -57,14 +72,25 @@ function detail(p) {
 }
 
 // ---------- realtime (SSE) ----------
-const streams = new Map(); // poolId -> Set<res>
+const streams = new Map(); // poolId -> Set<{ res, userId }>
+const streamTickets = new Map();
+const STREAM_TICKET_TTL_MS = 30_000;
+const MAX_STREAMS_PER_USER = 3;
+
+function pruneStreamTickets() {
+  const now = Date.now();
+  for (const [ticket, entry] of streamTickets) {
+    if (entry.expiresAt <= now) streamTickets.delete(ticket);
+  }
+}
+
 function broadcast(pool) {
   const set = streams.get(pool.id);
   if (!set) return;
   const payload = `event: pool\ndata: ${JSON.stringify(detail(pool))}\n\n`;
-  set.forEach((res) => res.write(payload));
+  set.forEach((stream) => stream.res.write(payload));
 }
-setInterval(() => streams.forEach((set) => set.forEach((res) => res.write(': ping\n\n'))), 25_000).unref();
+setInterval(() => streams.forEach((set) => set.forEach((stream) => stream.res.write(': ping\n\n'))), 25_000).unref();
 
 const persist = (pool) => { pools.save(); if (pool) broadcast(pool); };
 
@@ -88,16 +114,38 @@ router.get('/invite/:code', (req, res) => {
   res.json({ pool: summary(pool, null) });
 });
 
-// ---------- SSE stream (token via query since EventSource has no headers) ----------
+// ---------- SSE stream (short-lived, single-use, pool-scoped ticket) ----------
 router.get('/pools/:id/stream', (req, res) => {
-  const user = userFromToken(String(req.query.token || ''));
+  pruneStreamTickets();
+  const ticket = String(req.query.ticket || '');
+  const entry = streamTickets.get(ticket);
+  if (entry) streamTickets.delete(ticket);
   const pool = pools.rows.find((p) => p.id === req.params.id);
-  if (!user || !pool || !isMember(pool, user.id)) return res.status(403).end();
-  res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
+  if (!entry || entry.expiresAt <= Date.now() || entry.poolId !== req.params.id ||
+      !pool || !isMember(pool, entry.userId)) return res.status(403).end();
+
+  let set = streams.get(pool.id);
+  if (!set) {
+    set = new Set();
+    streams.set(pool.id, set);
+  }
+  if ([...set].filter((stream) => stream.userId === entry.userId).length >= MAX_STREAMS_PER_USER) {
+    return res.status(429).end();
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
   res.write(': connected\n\n');
-  if (!streams.has(pool.id)) streams.set(pool.id, new Set());
-  streams.get(pool.id).add(res);
-  req.on('close', () => streams.get(pool.id)?.delete(res));
+  const stream = { res, userId: entry.userId };
+  set.add(stream);
+  req.on('close', () => {
+    set.delete(stream);
+    if (!set.size) streams.delete(pool.id);
+  });
 });
 
 router.use(auth);
@@ -144,7 +192,12 @@ router.post('/pools', (req, res) => {
 router.get('/pools/:id', (req, res) => {
   const pool = pools.rows.find((p) => p.id === req.params.id);
   if (!pool) return res.status(404).json({ error: 'Pool not found.' });
-  if (!isMember(pool, req.user.id)) return res.json({ isMember: false, pool: summary(pool, req.user.id) });
+  if (!isMember(pool, req.user.id)) {
+    if (pool.visibility !== 'public' || !['open', 'negotiating'].includes(pool.status)) {
+      return res.status(404).json({ error: 'Pool not found.' });
+    }
+    return res.json({ isMember: false, pool: summary(pool, req.user.id) });
+  }
   res.json(detail(pool));
 });
 
@@ -155,6 +208,17 @@ function getPool(req, res, { member = true, creator = false } = {}) {
   if (creator && pool.creatorId !== req.user.id) return res.status(403).json({ error: 'Only the pool coordinator can do this.' }), null;
   return pool;
 }
+
+router.post('/pools/:id/stream-ticket', (req, res) => {
+  const pool = pools.rows.find((p) => p.id === req.params.id);
+  if (!pool) return res.status(404).json({ error: 'Pool not found.' });
+  if (!isMember(pool, req.user.id)) return res.status(403).json({ error: 'Only pool members can open this stream.' });
+  pruneStreamTickets();
+  if (streamTickets.size >= 5000) return res.status(503).json({ error: 'Realtime updates are temporarily unavailable.' });
+  const ticket = crypto.randomBytes(24).toString('base64url');
+  streamTickets.set(ticket, { userId: req.user.id, poolId: pool.id, expiresAt: Date.now() + STREAM_TICKET_TTL_MS });
+  res.set('Cache-Control', 'no-store').json({ ticket, expiresInSeconds: STREAM_TICKET_TTL_MS / 1000 });
+});
 
 router.post('/pools/:id/join', (req, res) => {
   const pool = getPool(req, res, { member: false });
@@ -312,7 +376,7 @@ router.post('/pools/:id/outreach/preview', (req, res) => {
   res.json({ to: b.email, subject, text });
 });
 
-router.post('/pools/:id/outreach', async (req, res) => {
+router.post('/pools/:id/outreach', mailSendLimiter, async (req, res) => {
   const pool = getPool(req, res, { creator: true });
   if (!pool) return;
   const b = outreachInput(req, res, pool);
@@ -328,8 +392,8 @@ router.post('/pools/:id/outreach', async (req, res) => {
     persist(pool);
     res.status(201).json(detail(pool));
   } catch (e) {
-    console.error('[mail] send failed:', e.message);
-    res.status(502).json({ error: 'Could not send the email: ' + e.message });
+    console.error('[mail] Send failed', { code: e.code || 'MAIL_SEND_FAILED' });
+    res.status(502).json({ error: 'Could not send the email. Check the mail service configuration and try again.' });
   }
 });
 
@@ -344,7 +408,7 @@ router.post('/pools/:id/responses', (req, res) => {
   res.status(201).json(detail(pool));
 });
 
-router.post('/pools/:id/check-replies', async (req, res) => {
+router.post('/pools/:id/check-replies', mailPollLimiter, async (req, res) => {
   const pool = getPool(req, res, { creator: true });
   if (!pool) return;
   const n = await mailer.pollNow();

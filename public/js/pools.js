@@ -253,13 +253,40 @@ window.Pools = (() => {
     const renderAll = () => { renderHead(); renderPrice(); renderMsgs(); renderMembers(); renderBuyers(); };
     renderAll();
 
-    // realtime
-    const es = new EventSource(`/api/pools/${id}/stream?token=${K().token}`);
-    es.addEventListener('pool', (e) => {
-      const keep = { name: $('#o-name')?.value, email: $('#o-email')?.value, note: $('#o-note')?.value };
-      pool = JSON.parse(e.data); renderHead(); renderPrice(); renderMsgs(); renderMembers();
-      if (!document.activeElement?.closest('#buyers')) { renderBuyers(); if (keep.name) { $('#o-name').value = keep.name; $('#o-email').value = keep.email; $('#o-note').value = keep.note; } }
-    });
+    // EventSource cannot set Authorization headers. Exchange the session token
+    // for a short-lived, single-use ticket, and mint a fresh ticket on reconnect.
+    let es = null;
+    let retryTimer = null;
+    let retryDelay = 1000;
+    let streamStopped = false;
+    async function connectRealtime() {
+      if (streamStopped) return;
+      try {
+        const { ticket } = await K().api(`/pools/${encodeURIComponent(id)}/stream-ticket`, { method: 'POST' });
+        if (streamStopped) return;
+        es = new EventSource(`/api/pools/${encodeURIComponent(id)}/stream?ticket=${encodeURIComponent(ticket)}`);
+        es.addEventListener('pool', (e) => {
+          const keep = { name: $('#o-name')?.value, email: $('#o-email')?.value, note: $('#o-note')?.value };
+          pool = JSON.parse(e.data); renderHead(); renderPrice(); renderMsgs(); renderMembers();
+          if (!document.activeElement?.closest('#buyers')) { renderBuyers(); if (keep.name) { $('#o-name').value = keep.name; $('#o-email').value = keep.email; $('#o-note').value = keep.note; } }
+        });
+        es.onopen = () => { retryDelay = 1000; };
+        es.onerror = () => {
+          if (es) es.close();
+          es = null;
+          if (streamStopped) return;
+          clearTimeout(retryTimer);
+          retryTimer = setTimeout(connectRealtime, retryDelay);
+          retryDelay = Math.min(retryDelay * 2, 15_000);
+        };
+      } catch {
+        if (streamStopped) return;
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(connectRealtime, retryDelay);
+        retryDelay = Math.min(retryDelay * 2, 15_000);
+      }
+    }
+    connectRealtime();
 
     const act = async (fn, okMsg) => { try { await fn(); if (okMsg) K().toast(okMsg); } catch (e) { K().toast(e.message, 'err'); } };
     const call = (path, body) => K().api(`/pools/${id}${path}`, { method: 'POST', body });
@@ -302,7 +329,11 @@ window.Pools = (() => {
       }
     });
 
-    return () => es.close();
+    return () => {
+      streamStopped = true;
+      clearTimeout(retryTimer);
+      if (es) es.close();
+    };
   }
 
   function wireJoin(root, p) {

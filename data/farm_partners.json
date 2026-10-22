@@ -1,0 +1,18 @@
+[
+  {
+    "id": "demo-operator-1",
+    "name": "Sample Farm Operator",
+    "role": "farm-operator",
+    "location": "Demo farm · Bengaluru",
+    "skills": ["Crop monitoring", "Hydroponics", "Harvest planning"],
+    "isDemo": true
+  },
+  {
+    "id": "demo-delivery-1",
+    "name": "Sample Delivery Partner",
+    "role": "delivery-partner",
+    "location": "Demo delivery area · Bengaluru",
+    "skills": ["Produce handling", "Local delivery", "Order hand-off"],
+    "isDemo": true
+  }
+]
