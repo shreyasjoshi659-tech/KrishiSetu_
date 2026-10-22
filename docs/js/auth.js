@@ -52,11 +52,7 @@
   $('r-state').insertAdjacentHTML('beforeend', STATES.map((s) => `<option value="${s}">${s}</option>`).join(''));
   renderCrops();
 
-  // Attach language selector in both hero header and login card
   if (window.I18N) {
-    if ($('hero-lang')) $('hero-lang').innerHTML = I18N.selectorHtml('hero-lang-sel');
-    if ($('card-lang')) $('card-lang').innerHTML = I18N.selectorHtml('card-lang-sel');
-    I18N.attachPicker(document);
     I18N.applyPage(document);
   }
 

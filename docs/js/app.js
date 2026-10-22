@@ -54,15 +54,6 @@
   $('avatar').textContent = first[0].toUpperCase();
   $('logout').addEventListener('click', logout);
 
-  // Attach language selector in top-right and sidebar
-  function updateLanguagePickers() {
-    if (!window.I18N) return;
-    if ($('app-top-lang')) $('app-top-lang').innerHTML = I18N.selectorHtml('top-lang-sel');
-    if ($('side-lang')) $('side-lang').innerHTML = I18N.selectorHtml('side-lang-sel');
-    I18N.attachPicker(document);
-    I18N.applyPage(document);
-  }
-  updateLanguagePickers();
 
   // Navigation Items (Clear, purposeful agricultural labels)
   function getNavItems() {
@@ -89,7 +80,6 @@
 
   window.addEventListener('langchange', () => {
     renderNav();
-    updateLanguagePickers();
     if (window.I18N) I18N.applyPage(document);
     route();
   });
@@ -232,7 +222,6 @@
           <p data-i18n="brand_sub">${window.I18N ? I18N.t('brand_sub') : 'KrishiSetu · Farmer Collective Portal'}</p>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <div id="top-lang">${window.I18N ? I18N.selectorHtml('topbar-lang-sel') : ''}</div>
           <a class="btn sm" href="#/pools/new">${window.I18N ? I18N.t('btn_new_pool') : '+ New Pool'}</a>
         </div>
       </header>
