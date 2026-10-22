@@ -26,5 +26,33 @@
     "photos": [
       "/uploads/6859b126-8e22-4dac-9ee7-687dd56149ed.png"
     ]
+  },
+  {
+    "id": "2eb7b757-ee56-4a3e-8238-b40b387f2aa0",
+    "userId": "68bb4de1-2385-4e9f-9388-ddf4a8c3748a",
+    "status": "available",
+    "createdAt": "2026-10-22T14:09:25.034Z",
+    "title": "Mahindra jumbo super",
+    "category": "Tractors",
+    "type": "rent",
+    "brand": "x7000",
+    "year": 2026,
+    "condition": "new",
+    "description": "the tractor is in great shape and can lift ,till and do other farming jobs",
+    "rentRate": 1000,
+    "rentUnit": "day",
+    "deposit": 5000,
+    "operatorIncluded": true,
+    "fuelIncluded": false,
+    "salePrice": null,
+    "negotiable": true,
+    "state": "Karnataka",
+    "district": "dharwad",
+    "village": "belvadi",
+    "contactPhone": "7337819007",
+    "whatsapp": true,
+    "photos": [
+      "/uploads/3f0f9acc-db2c-4356-9e4e-771574e8e25a.jpg"
+    ]
   }
 ]

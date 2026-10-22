@@ -54,12 +54,15 @@
   $('avatar').textContent = first[0].toUpperCase();
   $('logout').addEventListener('click', logout);
 
-  // Attach language selector in sidebar if available
-  if (window.I18N && $('side-lang')) {
-    $('side-lang').innerHTML = I18N.selectorHtml('side-lang-sel');
-    I18N.attachPicker($('side-lang'));
+  // Attach language selector in top-right and sidebar
+  function updateLanguagePickers() {
+    if (!window.I18N) return;
+    if ($('app-top-lang')) $('app-top-lang').innerHTML = I18N.selectorHtml('top-lang-sel');
+    if ($('side-lang')) $('side-lang').innerHTML = I18N.selectorHtml('side-lang-sel');
+    I18N.attachPicker(document);
     I18N.applyPage(document);
   }
+  updateLanguagePickers();
 
   // Navigation Items (Clear, purposeful agricultural labels)
   function getNavItems() {
@@ -86,6 +89,7 @@
 
   window.addEventListener('langchange', () => {
     renderNav();
+    updateLanguagePickers();
     if (window.I18N) I18N.applyPage(document);
     route();
   });

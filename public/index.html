@@ -24,115 +24,161 @@
         </g>
       </svg>
 
-      <div class="brand">
-        <div class="brand-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#07130c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10"/><path d="M12 10C12 6 9 4 5 4c0 4 2 6 7 6Z"/><path d="M12 13c0-3 2.5-5 7-5 0 4-2.5 6-7 5Z"/></svg>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; position:relative; z-index:2; margin-bottom:12px;">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#07130c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10"/><path d="M12 10C12 6 9 4 5 4c0 4 2 6 7 6Z"/><path d="M12 13c0-3 2.5-5 7-5 0 4-2.5 6-7 5Z"/></svg>
+          </div>
+          <div>
+            <div class="brand-name">Krishi<span>Setu</span></div>
+            <div class="brand-desc" style="font-size:0.75rem; color:var(--muted);" data-i18n="brand_sub">Farmer Collective</div>
+          </div>
         </div>
-        <div class="brand-name">Krishi<span>Setu</span></div>
+        <div id="hero-lang"></div>
       </div>
 
       <div class="hero-copy">
-        <h1>The bridge between <em>farmers</em> and a better harvest.</h1>
-        <p>Your companion for the field — from sowing to selling. Smart, simple and built for the way you farm.</p>
+        <h1 data-i18n="hero_title">The bridge between <em>farmers</em> and a better harvest.</h1>
+        <p data-i18n="hero_desc">Your companion for the field — from sowing to selling. Smart, simple and built for the way you farm.</p>
         <div class="chips">
-          <span class="chip">🌾 Crop guidance</span>
-          <span class="chip">⛅ Weather</span>
-          <span class="chip">💰 Market prices</span>
-          <span class="chip">🤝 Community</span>
+          <span class="chip" data-i18n="chip_crops">🌾 Crop guidance</span>
+          <span class="chip" data-i18n="chip_weather">⛅ Weather</span>
+          <span class="chip" data-i18n="chip_prices">💰 Market prices</span>
+          <span class="chip" data-i18n="chip_community">🤝 Community</span>
         </div>
       </div>
-      <div class="hero-foot">© KrishiSetu · Made for Indian farmers</div>
+      <div class="hero-foot" data-i18n="hero_foot">© KrishiSetu · Made for Indian farmers</div>
     </section>
 
     <section class="panel">
       <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:8px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+          <span style="font-size:0.84rem; color:var(--muted); font-weight:600;" data-i18n="choose_lang">Language / ಭಾಷೆ</span>
+          <div id="card-lang"></div>
+        </div>
+
         <div class="tabs" id="tabs" data-active="login" role="tablist">
           <span class="tab-pill"></span>
-          <button class="tab active" id="tab-login" data-tab="login" role="tab">Login</button>
-          <button class="tab" id="tab-register" data-tab="register" role="tab">Register</button>
+          <button class="tab active" id="tab-login" data-tab="login" role="tab" data-i18n="tab_login">Login</button>
+          <button class="tab" id="tab-register" data-tab="register" role="tab" data-i18n="tab_register">Register</button>
         </div>
 
         <!-- LOGIN -->
         <form id="login-form" class="show" novalidate>
-          <div><h2>Namaste 🙏</h2><p class="sub">Welcome back. Log in to continue.</p></div>
-          <div class="field"><label for="l-phone">Mobile number</label>
-            <input id="l-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="98765 43210" required /></div>
-          <div class="field"><label for="l-pass">Password</label>
-            <div class="pw"><input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••" required />
-              <button type="button" data-toggle="l-pass">Show</button></div></div>
+          <div>
+            <h2 data-i18n="login_greeting">Namaste 🙏</h2>
+            <p class="sub" data-i18n="login_sub">Welcome back. Log in to continue.</p>
+          </div>
+          <div class="field">
+            <label for="l-phone" data-i18n="lbl_phone">Mobile number</label>
+            <input id="l-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="98765 43210" required />
+          </div>
+          <div class="field">
+            <label for="l-pass" data-i18n="lbl_pass">Password</label>
+            <div class="pw">
+              <input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••" required />
+              <button type="button" data-toggle="l-pass" data-i18n="show_pw">Show</button>
+            </div>
+          </div>
           <div class="error" id="login-error" role="alert"></div>
-          <button class="btn" id="login-btn" type="submit">Log in</button>
+          <button class="btn" id="login-btn" type="submit" data-i18n="btn_login">Log in</button>
         </form>
 
         <!-- REGISTER -->
         <form id="register-form" novalidate>
-          <div><h2>Join KrishiSetu 🌱</h2><p class="sub">Create your verified farmer account.</p></div>
-
-          <div class="form-section-title">Farmer Identification</div>
-          <div class="field"><label for="r-name">Full name</label>
-            <input id="r-name" type="text" autocomplete="name" placeholder="e.g. Ramesh Patil" required /></div>
-          <div class="row">
-            <div class="field"><label for="r-phone">Mobile number</label>
-              <input id="r-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="98765 43210" maxlength="10" required /></div>
-            <div class="field"><label for="r-pass">Password</label>
-              <div class="pw"><input id="r-pass" type="password" autocomplete="new-password" placeholder="Min 6 chars" required />
-                <button type="button" data-toggle="r-pass">Show</button></div></div>
+          <div>
+            <h2 data-i18n="register_greeting">Join KrishiSetu 🌱</h2>
+            <p class="sub" data-i18n="register_sub">Create your verified farmer account.</p>
           </div>
 
-          <div class="form-section-title">Location &amp; APMC Mandi</div>
-          <div class="row">
-            <div class="field"><label for="r-state">State</label>
-              <select id="r-state" required><option value="">Select state</option></select></div>
-            <div class="field"><label for="r-district">District / Tehsil</label>
-              <input id="r-district" type="text" placeholder="e.g. Sehore" required /></div>
+          <div class="form-section-title" data-i18n="sec_farmer_id">Farmer Identification</div>
+          <div class="field">
+            <label for="r-name" data-i18n="lbl_name">Full name</label>
+            <input id="r-name" type="text" autocomplete="name" placeholder="e.g. Ramesh Patil" required />
           </div>
           <div class="row">
-            <div class="field"><label for="r-village">Village / Gram Panchayat</label>
-              <input id="r-village" type="text" placeholder="e.g. Ashta" /></div>
-            <div class="field"><label for="r-mandi">Nearest APMC Mandi</label>
-              <input id="r-mandi" type="text" placeholder="e.g. Sehore Mandi" /></div>
+            <div class="field">
+              <label for="r-phone" data-i18n="lbl_phone">Mobile number</label>
+              <input id="r-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="98765 43210" maxlength="10" required />
+            </div>
+            <div class="field">
+              <label for="r-pass" data-i18n="lbl_pass">Password</label>
+              <div class="pw">
+                <input id="r-pass" type="password" autocomplete="new-password" placeholder="Min 6 chars" required />
+                <button type="button" data-toggle="r-pass" data-i18n="show_pw">Show</button>
+              </div>
+            </div>
           </div>
 
-          <div class="form-section-title">Land &amp; Cultivation Profile</div>
+          <div class="form-section-title" data-i18n="sec_location">Location &amp; APMC Mandi</div>
           <div class="row">
-            <div class="field"><label for="r-land">Land holding (acres)</label>
-              <input id="r-land" type="number" min="0" step="0.5" placeholder="e.g. 4.5" /></div>
-            <div class="field"><label for="r-category">Farmer category</label>
+            <div class="field">
+              <label for="r-state" data-i18n="lbl_state">State</label>
+              <select id="r-state" required><option value="" data-i18n="sel_state">Select state</option></select>
+            </div>
+            <div class="field">
+              <label for="r-district" data-i18n="lbl_district">District / Tehsil</label>
+              <input id="r-district" type="text" placeholder="e.g. Sehore" required />
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="r-village" data-i18n="lbl_village">Village / Gram Panchayat</label>
+              <input id="r-village" type="text" placeholder="e.g. Ashta" />
+            </div>
+            <div class="field">
+              <label for="r-mandi" data-i18n="lbl_mandi">Nearest APMC Mandi</label>
+              <input id="r-mandi" type="text" placeholder="e.g. Sehore Mandi" />
+            </div>
+          </div>
+
+          <div class="form-section-title" data-i18n="sec_land">Land &amp; Cultivation Profile</div>
+          <div class="row">
+            <div class="field">
+              <label for="r-land" data-i18n="lbl_land">Land holding (acres)</label>
+              <input id="r-land" type="number" min="0" step="0.5" placeholder="e.g. 4.5" />
+            </div>
+            <div class="field">
+              <label for="r-category" data-i18n="lbl_category">Farmer category</label>
               <select id="r-category">
-                <option value="">Select category</option>
-                <option value="Marginal (< 2.5 acres)">Marginal (&lt; 2.5 acres)</option>
-                <option value="Small (2.5 – 5 acres)">Small (2.5 – 5 acres)</option>
-                <option value="Medium (5 – 10 acres)">Medium (5 – 10 acres)</option>
-                <option value="Large (> 10 acres)">Large (&gt; 10 acres)</option>
-              </select></div>
+                <option value="" data-i18n="sel_category">Select category</option>
+                <option value="Marginal (< 2.5 acres)" data-i18n="cat_marginal">Marginal (&lt; 2.5 acres)</option>
+                <option value="Small (2.5 – 5 acres)" data-i18n="cat_small">Small (2.5 – 5 acres)</option>
+                <option value="Medium (5 – 10 acres)" data-i18n="cat_medium">Medium (5 – 10 acres)</option>
+                <option value="Large (> 10 acres)" data-i18n="cat_large">Large (&gt; 10 acres)</option>
+              </select>
+            </div>
           </div>
-          <div class="field"><label for="r-irrigation">Primary irrigation source</label>
+          <div class="field">
+            <label for="r-irrigation" data-i18n="lbl_irrigation">Primary irrigation source</label>
             <select id="r-irrigation">
-              <option value="">Select irrigation source</option>
-              <option value="Borewell / Tube well">Borewell / Tube well</option>
-              <option value="Canal irrigation">Canal irrigation</option>
-              <option value="Rainfed (Monsoon dependant)">Rainfed (Monsoon dependant)</option>
-              <option value="Drip / Sprinkler system">Drip / Sprinkler system</option>
-              <option value="Pond / River / Well">Pond / River / Well</option>
-            </select></div>
+              <option value="" data-i18n="sel_irrigation">Select irrigation source</option>
+              <option value="Borewell / Tube well" data-i18n="irrig_borewell">Borewell / Tube well</option>
+              <option value="Canal irrigation" data-i18n="irrig_canal">Canal irrigation</option>
+              <option value="Rainfed (Monsoon dependant)" data-i18n="irrig_rainfed">Rainfed (Monsoon dependant)</option>
+              <option value="Drip / Sprinkler system" data-i18n="irrig_drip">Drip / Sprinkler system</option>
+              <option value="Pond / River / Well" data-i18n="irrig_pond">Pond / River / Well</option>
+            </select>
+          </div>
 
-          <div class="form-section-title">Major Crops Cultivated</div>
+          <div class="form-section-title" data-i18n="sec_crops">Major Crops Cultivated</div>
           <div class="field">
             <div class="crop-grid" id="crops"></div>
           </div>
 
-          <div class="form-section-title">Farm Machinery &amp; Equipment</div>
+          <div class="form-section-title" data-i18n="sec_machinery">Farm Machinery &amp; Equipment</div>
           <div class="field">
             <div class="crop-grid" id="equipment"></div>
           </div>
 
           <div class="error" id="register-error" role="alert"></div>
-          <button class="btn" id="register-btn" type="submit">Create farmer account</button>
-          <p class="switch">Already registered? <a data-go="login">Log in</a></p>
+          <button class="btn" id="register-btn" type="submit" data-i18n="btn_register">Create farmer account</button>
+          <p class="switch"><span data-i18n="already_reg">Already registered?</span> <a data-go="login" data-i18n="tab_login">Log in</a></p>
         </form>
       </div>
     </section>
   </main>
+  <script src="/js/i18n.js"></script>
   <script src="/js/auth.js"></script>
 </body>
 </html>

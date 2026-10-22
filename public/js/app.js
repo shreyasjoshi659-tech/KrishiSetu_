@@ -38,10 +38,52 @@
   $('avatar').textContent = first[0].toUpperCase();
   $('logout').addEventListener('click', logout);
 
-  const items = [['🏠', 'Home', '#/home'], ['🤝', 'Farmer Pools', '#/pools'], ['🧑‍🌾', 'Labour Connect', '#/labour'], ['🚜', 'Farm Gear', '#/gear']];
-  const navHtml = items.map(([i, l, h]) => `<a href="${h}" data-h="${h}"><span class="ico">${i}</span>${l}</a>`).join('');
-  $('nav').innerHTML = navHtml + `<a class="disabled"><span class="ico">✨</span>More soon</a>`;
-  $('bnav').innerHTML = navHtml;
+  function getNavItems() {
+    const lang = window.I18N ? I18N.getLang() : 'en';
+    const isKn = lang === 'kn';
+    return [
+      ['🏠', isKn ? 'ಮುಖಪುಟ' : 'Home', '#/home'],
+      ['🤝', isKn ? 'ಬೆಳೆ ಪೂಲ್' : 'Farmer Pools', '#/pools'],
+      ['🧑‍🌾', isKn ? 'ಕಾರ್ಮಿಕ ಸಂಪರ್ಕ' : 'Labour Connect', '#/labour'],
+      ['🚜', isKn ? 'ಕೃಷಿ ಉಪಕರಣ' : 'Farm Gear', '#/gear']
+    ];
+  }
+
+  function renderNav() {
+    const items = getNavItems();
+    const navHtml = items.map(([i, l, h]) => `<a href="${h}" data-h="${h}"><span class="ico">${i}</span>${l}</a>`).join('');
+    const moreText = window.I18N && I18N.getLang() === 'kn' ? 'ಇನ್ನಷ್ಟು ಶೀಘ್ರದಲ್ಲಿ' : 'More soon';
+    $('nav').innerHTML = navHtml + `<a class="disabled"><span class="ico">✨</span>${moreText}</a>`;
+    $('bnav').innerHTML = navHtml;
+    const cur = location.hash || '#/home';
+    document.querySelectorAll('.nav a, .bottom-nav a').forEach((a) => {
+      a.classList.toggle('active', a.dataset.h === cur);
+    });
+  }
+  renderNav();
+
+  function updateLanguagePickers() {
+    if (!window.I18N) return;
+    const topEl = $('app-top-lang');
+    if (topEl) {
+      topEl.innerHTML = I18N.selectorHtml('top-lang-sel');
+    }
+    const sideEl = $('side-lang');
+    if (sideEl) {
+      sideEl.innerHTML = I18N.selectorHtml('side-lang-sel');
+    }
+    I18N.attachPicker(document);
+    I18N.applyPage(document);
+  }
+  updateLanguagePickers();
+
+  window.addEventListener('langchange', () => {
+    renderNav();
+    updateLanguagePickers();
+    if (window.I18N) I18N.applyPage(document);
+    route();
+  });
+
   $('user-pill')?.addEventListener('click', () => { location.hash = '#/profile'; });
 
   const view = $('view');
@@ -57,52 +99,103 @@
     let mine = [];
     try { mine = (await api('/pools?scope=mine')).pools; } catch {}
     const qty = mine.reduce((a, p) => a + p.totalQuantity, 0);
+
+    const lang = window.I18N ? I18N.getLang() : 'en';
+    const isKn = lang === 'kn';
+
+    const greeting = isKn ? `ನಮಸ್ಕಾರ, ${esc(user.name)} 🙏` : `Namaste, ${esc(user.name)} 🙏`;
+    const subtitle = isKn ? 'ನಿಮ್ಮ ಕೃಷಿ, ಇನ್ನಷ್ಟು ಸುಲಭ ಮತ್ತು ಲಾಭದಾಯಕ.' : 'Your farm, simplified.';
+    const editHint = isKn ? '(ವಿವರ ಬದಲಿಸಲು ಹೆಸರು ಕ್ಲಿಕ್ ಮಾಡಿ)' : '(Click your name to change registration details)';
+
+    const statMyPools = isKn ? 'ನನ್ನ ಪೂಲ್‌ಗಳು' : 'My pools';
+    const statQty = isKn ? 'ಒಟ್ಟು ಕ್ವಿಂಟಾಲ್‌ಗಳು' : 'Quintals pooled';
+    const statOffers = isKn ? 'ಕಳುಹಿಸಿದ ಕೊಡುಗೆಗಳು' : 'Offers out';
+
+    const tilePools = isKn ? 'ಬೆಳೆ ಪೂಲ್' : 'Farmer Pools';
+    const tilePoolsP = isKn
+      ? 'ಒಂದೇ ಬೆಳೆ ಬೆಳೆಯುವ ರೈತರೊಂದಿಗೆ ಒಟ್ಟುಗೂಡಿ, ಒಂದು ಬೆಲೆ ಒಪ್ಪಿ ನೇರವಾಗಿ ಗಿರಣಿಗಳಿಗೆ ಮಾರಾಟ ಮಾಡಿ — ದಲ್ಲಾಳಿಗಳಿಲ್ಲದೆ.'
+      : 'Team up with farmers growing the same crop, agree on one price and sell straight to processors & wholesalers — no middleman.';
+
+    const tileLabour = isKn ? 'ಕಾರ್ಮಿಕ ಸಂಪರ್ಕ' : 'Labour Connect';
+    const tileLabourP = isKn
+      ? 'ಕೆಲಸಕ್ಕೆ ಆಳುಗಳು ಬೇಕೇ? ಬಿತ್ತನೆ, ಕಳೆ ಕೀಳುವಿಕೆ, ಸಿಂಪರಣೆಗೆ ಸಮೀಪದ ನುರಿತ ಕಾರ್ಮಿಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.'
+      : 'Short of hands? Hire skilled workers nearby for ploughing, weeding, spraying & more — or list your own services and set your pay.';
+
+    const tileGear = isKn ? 'ಕೃಷಿ ಉಪಕರಣ' : 'Farm Gear';
+    const tileGearP = isKn
+      ? 'ಟ್ರಾಕ್ಟರ್, ರೋಟಾವೇಟರ್, ಸಿಂಪಡಕ ಯಂತ್ರಗಳನ್ನು ಬಾಡಿಗೆಗೆ ಪಡೆಯಿರಿ ಅಥವಾ ನಿಮ್ಮ ಸಲಕರಣೆಗಳನ್ನು ಬಾಡಿಗೆಗೆ ನೀಡಿ ಸಂಪಾದಿಸಿ.'
+      : 'Rent or buy tractors, power tillers, sprayers, ploughs & tools from farmers nearby — or earn by renting out your idle equipment.';
+
+    const tileOpen = isKn ? 'ತೆರೆಯಿರಿ →' : 'Open →';
+
+    const profileTitle = isKn ? '🧑‍🌾 ಅಧಿಕೃತ ರೈತ ನೋಂದಣಿ ವಿವರಗಳು' : '🧑‍🌾 Verified Registration Details';
+    const profileSub = isKn ? 'ನಿಮ್ಮ ವಿವರಗಳನ್ನು ನವೀಕರಿಸಲು ಹೆಸರು ಅಥವಾ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ.' : 'Click your name or the button to update your registered information.';
+    const btnChange = isKn ? '✏️ ನೋಂದಣಿ ವಿವರಗಳನ್ನು ಬದಲಾಯಿಸಿ' : '✏️ Change Registration Details';
+
+    const profileFields = isKn ? [
+      ['ಪೂರ್ಣ ಹೆಸರು', user.name],
+      ['ಮೊಬೈಲ್ ಸಂಖ್ಯೆ', user.phone],
+      ['ರಾಜ್ಯ', user.state],
+      ['ಜಿಲ್ಲೆ / ತಾಲೂಕು', user.district || '—'],
+      ['ಗ್ರಾಮ / ಪಂಚಾಯತ್', user.village || '—'],
+      ['ಸಮೀಪದ ಎಪಿಎಂಸಿ ಮಂಡಿ', user.nearestMandi || '—'],
+      ['ಕೃಷಿ ಭೂಮಿ', user.landSize ? user.landSize + ' ಎಕರೆ' : '—'],
+      ['ರೈತರ ವರ್ಗ', user.farmCategory || '—'],
+      ['ಪ್ರಮುಖ ನೀರಾವರಿ', user.irrigation || '—'],
+      ['ಬೆಳೆಯುವ ಬೆಳೆಗಳು', (user.crops || []).join(', ') || '—'],
+      ['ಕೃಷಿ ಯಂತ್ರೋಪಕರಣಗಳು', (user.equipment || []).join(', ') || '—']
+    ] : [
+      ['Full Name', user.name],
+      ['Mobile Number', user.phone],
+      ['State', user.state],
+      ['District / Tehsil', user.district || '—'],
+      ['Village / Panchayat', user.village || '—'],
+      ['Nearest APMC Mandi', user.nearestMandi || '—'],
+      ['Land Holding', user.landSize ? user.landSize + ' acres' : '—'],
+      ['Farmer Category', user.farmCategory || '—'],
+      ['Primary Irrigation', user.irrigation || '—'],
+      ['Crops Cultivated', (user.crops || []).join(', ') || '—'],
+      ['Machinery & Tools', (user.equipment || []).join(', ') || '—']
+    ];
+
     view.innerHTML = `
       <header class="topbar">
         <div>
-          <h1>Namaste, <button type="button" id="top-user-name" title="Click your name to change registration details" style="all:unset; cursor:pointer; color:var(--gold); font-weight:800; text-decoration:underline;">${esc(user.name)}</button> 🙏</h1>
-          <p>Your farm, simplified. <span style="font-size:0.82rem; color:var(--gold); cursor:pointer;" onclick="location.hash='#/profile'">(Click your name to change registration details)</span></p>
+          <h1>${isKn ? 'ನಮಸ್ಕಾರ, ' : 'Namaste, '}<button type="button" id="top-user-name" title="Click your name to change registration details" style="all:unset; cursor:pointer; color:var(--gold); font-weight:800; text-decoration:underline;">${esc(user.name)}</button> 🙏</h1>
+          <p>${subtitle} <span style="font-size:0.82rem; color:var(--gold); cursor:pointer;" onclick="location.hash='#/profile'">${editHint}</span></p>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div id="top-lang">${window.I18N ? I18N.selectorHtml('top-lang-sel') : ''}</div>
         </div>
       </header>
       <section class="stats">
-        <div class="stat"><b>${mine.length}</b><span>My pools</span></div>
-        <div class="stat"><b>${qty}</b><span>Quintals pooled</span></div>
-        <div class="stat"><b>${mine.filter((p) => ['quote_sent', 'responded'].includes(p.status)).length}</b><span>Offers out</span></div>
+        <div class="stat"><b>${mine.length}</b><span>${statMyPools}</span></div>
+        <div class="stat"><b>${qty}</b><span>${statQty}</span></div>
+        <div class="stat"><b>${mine.filter((p) => ['quote_sent', 'responded'].includes(p.status)).length}</b><span>${statOffers}</span></div>
       </section>
       <section class="tiles">
-        <a class="tile hot" href="#/pools"><div class="ico">🤝</div><h3>Farmer Pools</h3>
-          <p>Team up with farmers growing the same crop, agree on one price and sell straight to processors &amp; wholesalers — no middleman.</p><span class="soon live">Open →</span></a>
-        <a class="tile hot" href="#/labour"><div class="ico">🧑‍🌾</div><h3>Labour Connect</h3>
-          <p>Short of hands? Hire skilled workers nearby for ploughing, weeding, spraying &amp; more — or list your own services and set your pay.</p><span class="soon live">Open →</span></a>
-        <a class="tile hot" href="#/gear"><div class="ico">🚜</div><h3>Farm Gear</h3>
-          <p>Rent or buy tractors, power tillers, sprayers, ploughs &amp; tools from farmers nearby — or earn by renting out your idle equipment.</p><span class="soon live">Open →</span></a>
+        <a class="tile hot" href="#/pools"><div class="ico">🤝</div><h3>${tilePools}</h3>
+          <p>${tilePoolsP}</p><span class="soon live">${tileOpen}</span></a>
+        <a class="tile hot" href="#/labour"><div class="ico">🧑‍🌾</div><h3>${tileLabour}</h3>
+          <p>${tileLabourP}</p><span class="soon live">${tileOpen}</span></a>
+        <a class="tile hot" href="#/gear"><div class="ico">🚜</div><h3>${tileGear}</h3>
+          <p>${tileGearP}</p><span class="soon live">${tileOpen}</span></a>
       </section>
       <section class="profile" aria-label="Your registered details">
         <div class="profile-edit-banner">
           <div>
-            <h2 style="font-size:1.15rem; margin:0; display:flex; align-items:center; gap:8px;">🧑‍🌾 Verified Registration Details</h2>
-            <small style="color:var(--muted);">Click your name or the button to update your registered information.</small>
+            <h2 style="font-size:1.15rem; margin:0; display:flex; align-items:center; gap:8px;">${profileTitle}</h2>
+            <small style="color:var(--muted);">${profileSub}</small>
           </div>
-          <button type="button" class="btn sm" onclick="location.hash='#/profile'" style="background:linear-gradient(135deg, var(--gold), var(--gold-d)); color:#07130c; font-weight:700;">✏️ Change Registration Details</button>
+          <button type="button" class="btn sm" onclick="location.hash='#/profile'" style="background:linear-gradient(135deg, var(--gold), var(--gold-d)); color:#07130c; font-weight:700;">${btnChange}</button>
         </div>
-        ${[
-          ['Full Name', user.name],
-          ['Mobile Number', user.phone],
-          ['State', user.state],
-          ['District / Tehsil', user.district || '—'],
-          ['Village / Panchayat', user.village || '—'],
-          ['Nearest APMC Mandi', user.nearestMandi || '—'],
-          ['Land Holding', user.landSize ? user.landSize + ' acres' : '—'],
-          ['Farmer Category', user.farmCategory || '—'],
-          ['Primary Irrigation', user.irrigation || '—'],
-          ['Crops Cultivated', (user.crops || []).join(', ') || '—'],
-          ['Machinery & Tools', (user.equipment || []).join(', ') || '—']
-        ]
+        ${profileFields
           .filter(([_, v]) => v && v !== '—')
           .map(([k, v]) => `<div><small>${k}</small><strong>${esc(v)}</strong></div>`).join('')}
       </section>`;
 
     view.querySelector('#top-user-name')?.addEventListener('click', () => { location.hash = '#/profile'; });
+    if (window.I18N) I18N.attachPicker(view);
   }
 
   async function editProfile(root) {
